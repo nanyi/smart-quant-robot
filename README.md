@@ -10,17 +10,30 @@
 
 这世上，没有百分百赚钱的方式，量化交易策略只是一个辅助工具。
 
+
 ## 为什么选择币安交易所
+
 交易的手续费看起来很少，但是随着交易次数逐步增多，手续费也是一笔不小的开支。
 所以我选择了币安，手续费低的大平台交易所
+
 > 火币手续费 Maker 0.2% Taker 0.2%
 
 > 币安手续费 Maker 0.1% Taker 0.1% （加上BNB家持手续费低至0.075%）
 
+
 ## 运行环境
+
 python3.7
 
-由于交易所的api在大陆无法访问，需要科学上网
+由于交易所的api在大陆无法访问，需要科学上网，若无，可用[泰山]
+
+泰山邀请码：OxCJV3VZ
+
+最新地址1：[https://hk.taishan.pro](https://hk.taishan.pro/#/register?code=OxCJV3VZ)
+
+最新地址2：[https://jp.taishan.pro](https://jp.taishan.pro/#/register?code=OxCJV3VZ)
+
+最新地址3：[https://ru.taishan.pro](https://ru.taishan.pro/#/register?code=OxCJV3VZ)
 
 
 ## 快速使用
@@ -47,7 +60,8 @@ dingding_token = '申请钉钉群助手的token'   # 强烈建议使用
 
 
 4、交易策略配置信息 runtime_config.py
-设置你的配置信息：
+
+设置配置信息：
 
 ```
 # 均线, ma_x 要大于 ma_y
@@ -85,4 +99,5 @@ python main.py
 Linux, 1核CPU, 2G内存(1G也可)
 
 建议在阿里云上购买的日本东京服务器(传说币安服务器就在东京)
+
 也可选择 新加坡、香港服务器
