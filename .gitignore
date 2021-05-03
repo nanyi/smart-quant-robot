@@ -91,3 +91,4 @@ dashboard/Logs/
 # Runtime state / local snapshots
 native_state.json
 *.pid
+backup/
