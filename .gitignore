@@ -1,3 +1,93 @@
-.idea/
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.so
+*.egg-info/
+.Python
+.github/
+# Virtual environments
+.venv/
 venv/
+env/
+ENV/
+.python-version
 
+# Packaging / build artifacts
+build/
+dist/
+pip-wheel-metadata/
+
+# Test / type-check / coverage caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+
+# ===== Django =====
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# ===== Local runtime/config/secrets =====
+config.ini
+config.yaml
+examples/
+test/
+deploy/
+brother3.py
+doc/
+migrations/
+# ===== IDE / Editor =====
+.idea/
+.vscode/
+*.swp
+*.swo
+.cache/
+**/.cache/
+.clang*
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===== C/C++ / CMake / Visual Studio artifacts =====
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+Makefile
+*.dir/
+*.vcxproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.obj
+*.o
+*.pdb
+*.idb
+*.ilk
+*.exp
+
+# Project-native build outputs
+native/**/build/
+native/**/x64/
+native/**/Release/
+native/**/Debug/
+ctp_native/**/build/
+
+# CTP runtime flow/log dirs
+native/ctp_bridge/flow/
+dashboard/Logs/
+
+# Runtime state / local snapshots
+native_state.json
+*.pid
