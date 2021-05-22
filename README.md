@@ -72,7 +72,7 @@ ma_y = 60
 binance_market = "SPOT"#现货市场
 binance_coinBase = "USDT"#使用USDT作为基础币种，用于购买其他货币；
 binance_tradeCoin = "DOGE"#交易目标是 DOGE 币，
-kLine_type = '5m' # 15分钟k线类型，你可以设置为5分钟K线：5m;1小时为：1h;1天为：1d
+kLine_type = '15m' # 15分钟k线类型，你可以设置为5分钟K线：5m;1小时为：1h;1天为：1d
 ```
 当 kline 5 向上穿过 kline 60， 则执行买入。
 
