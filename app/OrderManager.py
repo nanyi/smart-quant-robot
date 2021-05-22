@@ -11,7 +11,7 @@ from app.authorization import api_key,api_secret
 from app.dingding import Message
 from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
 import schedule
-from runtime_config import orderInfo_path, sellStrategy1, sellStrategy2, sellStrategy3 , ma_x, ma_y, isOpenSellStrategy, kLine_type
+from runtime_config import orderInfo_path, ma_x, ma_y, kLine_type
 
 
 binan = BinanceAPI(api_key,api_secret)
@@ -52,11 +52,12 @@ class ExchangeRule(object):
 
 class OrderManager(object):
 
-    def __init__(self, coinBase, tradeCoin, market):
-        self.coin_base = coinBase # 基础币，例如USDT
-        self.trade_coin = tradeCoin #买卖币种，例如 DOGER
-        self.market = market #市场，例如：现货 "SPOT"
-        self.symbol = tradeCoin+coinBase #交易符号，例如"DOGEUSDT"
+    def __init__(self, coinBase, coinBaseCount, tradeCoin, market):
+        self.coin_base = coinBase  # 基础币，例如USDT
+        self.coin_base_count = coinBaseCount  # 买币时最多可用资金量
+        self.trade_coin = tradeCoin  # 买卖币种，例如 DOGER
+        self.market = market  # 市场，例如：现货 "SPOT"
+        self.symbol = tradeCoin + coinBase  # 交易符号，例如"DOGEUSDT"
         self.exchangeRule = None
 
 
@@ -82,59 +83,6 @@ class OrderManager(object):
         msgInfo = "卖出部分结果：\n" + str(order_result_str)
 
         return msgInfo
-
-    #分批出售策略
-    def sellStrategy(self, filePath):
-        msgInfo = ""
-        dictOrder = self.readOrderInfo(filePath)
-        if dictOrder is None:
-            return msgInfo
-
-        # 读取上次买入的价格
-        buyPrice = self.priceOfPreviousOrder(orderInfo_path)
-        if buyPrice > 0:
-            # 查询当前价格
-            cur_price = binan.get_ticker_price(self.symbol)
-            #查询当前资产
-            asset_coin = binan.get_spot_asset_by_symbol(self.trade_coin)
-            print(self.trade_coin + " 资产2：")
-            print(asset_coin)
-
-            if "sellStrategy3" in dictOrder:
-                tmpSellStrategy = dictOrder['sellStrategy3']
-                if buyPrice * tmpSellStrategy['profit'] <= cur_price:
-                    quantity = self.format_trade_quantity(float(asset_coin["free"])*tmpSellStrategy['sell'])
-                    # 卖出
-                    msgInfo= msgInfo + self.doSellFunc(self.symbol,quantity,cur_price)
-                    del dictOrder['sellStrategy3']
-                    self.writeOrderInfo(filePath, dictOrder)
-                    dictOrder = self.readOrderInfo(filePath)
-                    print("部分卖出--sellStrategy3")
-
-            if "sellStrategy2" in dictOrder:
-                tmpSellStrategy = dictOrder['sellStrategy2']
-                if buyPrice * tmpSellStrategy['profit'] <= cur_price:
-                    quantity = self.format_trade_quantity(float(asset_coin["free"]) * tmpSellStrategy['sell'])
-                    # 卖出
-                    msgInfo = msgInfo + self.doSellFunc(self.symbol, quantity, cur_price)
-                    del dictOrder['sellStrategy2']
-                    self.writeOrderInfo(filePath, dictOrder)
-                    dictOrder = self.readOrderInfo(filePath)
-                    print("部分卖出--sellStrategy2")
-
-            if "sellStrategy1" in dictOrder:
-                tmpSellStrategy = dictOrder['sellStrategy1']
-                if buyPrice * tmpSellStrategy['profit'] <= cur_price:
-                    quantity = self.format_trade_quantity(float(asset_coin["free"]) * tmpSellStrategy['sell'])
-                    # 卖出
-                    msgInfo = msgInfo + self.doSellFunc(self.symbol, quantity, cur_price)
-                    del dictOrder['sellStrategy1']
-                    self.writeOrderInfo(filePath, dictOrder)
-                    dictOrder = self.readOrderInfo(filePath)
-                    print("部分卖出--sellStrategy1")
-
-        return msgInfo
-
 
 
     # 格式化交易信息结果
@@ -173,6 +121,20 @@ class OrderManager(object):
             else:
                 return None
 
+        # 比较本次买入提示的str是否重复
+        def judgeToBuyCommand(self, filePath, theToBuyCommand):
+            orderDict = self.readOrderInfo(filePath)
+
+            if orderDict is None:
+                return True  # 购买
+
+            if "toBuy" in orderDict:
+                if orderDict["toBuy"] == theToBuyCommand:
+                    print('本次购买时间是 ' + str(theToBuyCommand) + ' ，重复，不执行购买')
+                    return False  # 不执行购买，因为重复
+
+            return True
+
     # 获取 上次买入订单中的价格Price
     def priceOfPreviousOrder(self, filePath):
         dataDict = self.readOrderInfo(filePath)
@@ -200,11 +162,6 @@ class OrderManager(object):
 
 
     def writeOrderInfoWithSellStrategy(self,filePath, dictObj):
-
-        if isOpenSellStrategy:
-            dictObj["sellStrategy1"] = sellStrategy1
-            dictObj["sellStrategy2"] = sellStrategy2
-            dictObj["sellStrategy3"] = sellStrategy3
 
         self.writeOrderInfo(filePath, dictObj)
 
@@ -257,27 +214,43 @@ class OrderManager(object):
             trade_direction = dALines.release_trade_stock(ma_x, ma_y, self.symbol, kline_df)
 
             if trade_direction is not None:
-                if trade_direction == "buy":
-                    # coin_base = "USDT"
-                    asset_coin = binan.get_spot_asset_by_symbol(self.coin_base)
-                    print(self.coin_base + " 资产：")
-                    print(asset_coin)
 
-                    # 查询当前价格
-                    cur_price = binan.get_ticker_price(self.symbol)
-                    # 购买量
-                    quantity = self.format_trade_quantity(float(asset_coin["free"]) / float(cur_price))
-                    # 购买
-                    res_order_buy = binan.buy_limit(self.symbol, quantity, cur_price)
-                    print("购买结果：")
-                    print(res_order_buy)
+                if "buy," in trade_direction:
 
+                    isToBuy = self.judgeToBuyCommand(orderInfo_path, trade_direction)
 
-                    # 存储买入订单信息
-                    self.writeOrderInfoWithSellStrategy(orderInfo_path, res_order_buy)
+                    if isToBuy is False:
+                        msgInfo = msgInfo + "服务正常3"
+                        isDefaultToken = True
+                    else:
+                        isDefaultToken = False
 
-                    order_result_str = self.printOrderJsonInfo(res_order_buy)
-                    msgInfo = "购买结果：\n" + order_result_str
+                        # coin_base = "USDT"
+                        asset_coin = binan.get_spot_asset_by_symbol(self.coin_base)
+                        print(self.coin_base + " 资产：" + str(asset_coin))
+
+                        # 购买，所用资金量
+                        coin_base_count = float(asset_coin["free"])
+                        if self.coin_base_count <= coin_base_count:
+                            coin_base_count = self.coin_base_count
+
+                        print("binance_func--可用资金量coin_base_count= " + str(coin_base_count))
+                        # 查询当前价格
+                        cur_price = binan.get_ticker_price(self.symbol)
+                        # 购买量
+                        quantity = self.format_trade_quantity(coin_base_count / float(cur_price))
+                        # 购买
+                        res_order_buy = binan.buy_limit(self.symbol, quantity, cur_price)
+                        print("购买结果：")
+                        print(res_order_buy)
+
+                        # 存储买入订单信息
+                        if res_order_buy is not None and "symbol" in res_order_buy:
+                            res_order_buy["toBuy"] = trade_direction
+                            self.writeOrderInfoWithSellStrategy(orderInfo_path, res_order_buy)
+
+                        order_result_str = self.printOrderJsonInfo(res_order_buy)
+                        msgInfo = "购买结果：\n" + order_result_str
 
                 elif trade_direction == "sell":
                     # coin_base = "DOGE"
@@ -300,13 +273,10 @@ class OrderManager(object):
                     msgInfo = "卖出结果：\n" + str(order_result_str)
 
             else:
-                msgInfo = self.sellStrategy(orderInfo_path)
-
-                if msgInfo == "":
-                    msgInfo = msgInfo + str(ts) + "\n"
-                    print("暂不执行任何交易2")
-                    msgInfo = msgInfo + "服务正常2"
-                    isDefaultToken = True
+                # msgInfo = msgInfo + str(ts) + "\n"
+                print("暂不执行任何交易2")
+                msgInfo = msgInfo + "服务正常2"
+                isDefaultToken = True
 
             print("-----------------------------------------------\n")
         except Exception as ex:
