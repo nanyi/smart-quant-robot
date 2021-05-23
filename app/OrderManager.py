@@ -296,4 +296,7 @@ class OrderManager(object):
             msgInfo = msgInfo + str(err_str) + "\n"
 
         finally:
-            msg.dingding_warn(msgInfo, isDefaultToken)
+            if "服务正常" in msgInfo:
+                pass
+            else:
+                msg.dingding_warn(msgInfo, isDefaultToken)
