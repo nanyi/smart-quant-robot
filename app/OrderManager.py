@@ -11,7 +11,7 @@ from app.authorization import api_key,api_secret
 from app.dingding import Message
 from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
 import schedule
-from runtime_config import orderInfo_path, ma_x, ma_y, kLine_type
+from runtime_config import ma_x, ma_y, kLine_type
 
 
 binan = BinanceAPI(api_key,api_secret)
@@ -59,6 +59,8 @@ class OrderManager(object):
         self.market = market  # 市场，例如：现货 "SPOT"
         self.symbol = tradeCoin + coinBase  # 交易符号，例如"DOGEUSDT"
         self.exchangeRule = None
+        self.orderInfoSavePath = "./" + self.symbol + "_buyOrderInfo.json"
+
 
 
     def gain_exchangeRule(self, theSymbol):
@@ -217,7 +219,7 @@ class OrderManager(object):
 
                 if "buy," in trade_direction:
 
-                    isToBuy = self.judgeToBuyCommand(orderInfo_path, trade_direction)
+                    isToBuy = self.judgeToBuyCommand(self.orderInfoSavePath, trade_direction)
 
                     if isToBuy is False:
                         msgInfo = msgInfo + "服务正常3"
@@ -247,13 +249,13 @@ class OrderManager(object):
                         # 存储买入订单信息
                         if res_order_buy is not None and "symbol" in res_order_buy:
                             res_order_buy["toBuy"] = trade_direction
-                            self.writeOrderInfoWithSellStrategy(orderInfo_path, res_order_buy)
+                            self.writeOrderInfoWithSellStrategy(self.orderInfoSavePath, res_order_buy)
 
                         order_result_str = self.printOrderJsonInfo(res_order_buy)
                         msgInfo = "购买结果：\n" + order_result_str
 
                 elif trade_direction == "sell":
-                    dictOrder = self.readOrderInfo(orderInfo_path)
+                    dictOrder = self.readOrderInfo(self.orderInfoSavePath)
 
                     if dictOrder is None:
                         msgInfo = msgInfo + "服务正常4--已无可售"
@@ -277,7 +279,7 @@ class OrderManager(object):
                             # 卖出
                             res_order_sell = binan.sell_limit(self.symbol, quantity, cur_price)
                             # 清理本地订单信息
-                            self.clearOrderInfo(orderInfo_path)
+                            self.clearOrderInfo(self.orderInfoSavePath)
                             print("出售结果：")
                             print(res_order_sell)
                             order_result_str = self.printOrderJsonInfo(res_order_sell)

@@ -12,9 +12,12 @@ import datetime
 import schedule
 import math
 import json,os
-from runtime_config import binance_market,binance_coinBase,binance_tradeCoin,binance_coinBase_count
+from runtime_config import binance_market
 
-orderManager = OrderManager(binance_coinBase, binance_coinBase_count,binance_tradeCoin, binance_market)
+# 使用 USDT 购买 DOGE,限定最多100个USDT
+orderManager_doge = OrderManager("USDT", 100,"DOGE", binance_market)
+# 使用 USDT 购买 ETH,限定最多100个USDT
+orderManager_eth = OrderManager("USDT", 100,"ETH", binance_market)
 
 msgDing = Message()
 
@@ -34,7 +37,9 @@ def sendServiceInfo():
 
 
 def binance_func():
-    orderManager.binance_func()
+    orderManager_doge.binance_func()
+    time.sleep(10)
+    orderManager_eth.binance_func()
 
 
 # 创建循环任务
@@ -59,6 +64,4 @@ if __name__ == "__main__":
 
     # 启动，先从币安获取交易规则， https://api.binance.com/api/v3/exchangeInfo
     tasklist()
-
-    # binance_func()
 
