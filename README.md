@@ -60,7 +60,6 @@ python3.7
 
 [钉钉自定义机器人注册方法](https://m.dingtalk.com/qidian/help-detail-20781541)
 
-
 3、修改app目录下的authorization文件
 
 ```
@@ -68,7 +67,6 @@ api_key='币安key'
 api_secret='币安secret'
 dingding_token = '申请钉钉群助手的token'   # 强烈建议使用
 ```
-
 
 4、交易策略配置信息 runtime_config.py
 
@@ -81,7 +79,7 @@ ma_y = 60
 
 # 币安
 binance_market = "SPOT"#现货市场
-kLine_type = '15m' # 15分钟k线类型，你可以设置为5分钟K线：5m;1小时为：1h;1天为：1d
+kLine_type = '15m' # 15分钟k线类型，可以设置为5分钟K线：5m;1小时为：1h;1天为：1d
 ```
 当 kline 5 向上穿过 kline 60， 则执行买入。
 
@@ -117,13 +115,10 @@ def binance_func():
 程序可同时监控 DOGE 和 ETH 的均线，并根据策略执行交易。
 使用时，可根据自身需要，增加其他币种。
 
-
-
 6、运行程序(记得先开科学上网)
 ```
 python main.py
 ```
-
 
 
 ## 服务器部署
@@ -132,6 +127,7 @@ python main.py
 ### 服务器配置：
 Linux, 1核CPU, 2G内存(1G也可)
 
-建议在阿里云上购买的日本东京服务器(传说币安服务器就在东京)
+可以在阿里云上购买的日本东京服务器(传说币安服务器就在东京)
 
 也可选择 新加坡、香港服务器
+
