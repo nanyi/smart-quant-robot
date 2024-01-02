@@ -8,7 +8,11 @@
 
 本系统采用双均线交易策略，两条均线出现金叉则买入，出现死叉则卖出。
 
+[币安账号注册页面](https://www.bsmkweb.cc/referral/earn-together/refer2earn-usdc/claim?hl=zh-CN&ref=GRO_28502_EM5R3&utm_source=referral_entrance&utm_medium=web_share_copy)（通过链接注册，享受交易返现优惠政策）
+
 币安账号注册邀请码：GRO_28502_EM5R3
+
+![binance_20210430132249_69_656.jpg](binance_20210430132249_69_656.jpg)
 
 这世上，没有百分百赚钱的方式，量化交易策略只是一个辅助工具。
 
@@ -33,6 +37,7 @@
 
 > 币安手续费 Maker 0.1% Taker 0.1% （加上BNB家持手续费低至0.075%）
 
+[币安账号注册页面](https://www.bsmkweb.cc/referral/earn-together/refer2earn-usdc/claim?hl=zh-CN&ref=GRO_28502_EM5R3&utm_source=referral_entrance&utm_medium=web_share_copy)（通过链接注册，享受交易返现优惠政策）
 
 ## 运行环境
 
