@@ -1,28 +1,27 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
-# @Site    :
-# @File    : main.py
-# @Software: PyCharm
 from app.dingding import Message
 from app.OrderManager import OrderManager
 
-import time
 import datetime
+import time
+
 import schedule
 import math
 import json,os
 from runtime_config import binance_market,binance_coinBase,binance_tradeCoin, binance_coinBase_count
 
 
-orderManager = OrderManager("USDT", 100,"DOGE", binance_market)
+orderManager_doge = OrderManager("USDT", 100, "DOGE", binance_market)
 
-orderManager_eth = OrderManager("USDT", 100,"ETH", binance_market)
+orderManager_eth = OrderManager("USDT", 100, "ETH", binance_market)
 
 msgDing = Message()
 
 # 发送消息通知
-def sendInfoToDingDing( message, isDefaultToken):
+
+def dingding_notifier(message, isDefaultToken):
     # 记录执行时间
     now = datetime.datetime.now()
     ts = now.strftime('%Y-%m-%d %H:%M:%S')
@@ -31,27 +30,30 @@ def sendInfoToDingDing( message, isDefaultToken):
 
 
 def binance_func():
-    orderManager.binance_func()
+    orderManager_doge.binance_func()
     # time.sleep(5)
     # orderManager_eth.binance_func()
 
 
-def sendServiceInfo():
+def send_service_info():
     str = "服务正常--ok"
-    sendInfoToDingDing(str, True)
+    dingding_notifier(str, True)
+
 
 # 创建循环任务
 def tasklist():
     #清空任务
+    print("服务启动")
+    # 清空任务
     schedule.clear()
-    #创建一个按秒间隔执行任务
+    # 创建一个按秒间隔执行任务
     # schedule.every().hours.at("04:05").do(binance_func)
 
-    #
+    # 创建一个按秒间隔执行任务
     schedule.every(15).seconds.do(binance_func)
 
-    schedule.every(20).minutes.do(sendServiceInfo)
-
+    # 创建一个按分钟间隔执行任务
+    schedule.every(20).minutes.do(send_service_info)
 
     while True:
         schedule.run_pending()

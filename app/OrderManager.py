@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
-# @Site    :
-# @File    : OrderManager.py
-# @Software: PyCharm
+
 import json, os, time, datetime, math
+import traceback
+
 from app.BinanceAPI import BinanceAPI
 
-from app.authorization import api_key,api_secret
+from app.authorization import api_key, api_secret
 from app.dingding import Message
 from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
 import schedule
-from runtime_config import sellStrategy1, sellStrategy2, sellStrategy3 , ma_x, ma_y, isOpenSellStrategy, kLine_type
+from runtime_config import sellStrategy1, sellStrategy2, sellStrategy3, ma_x, ma_y, isOpenSellStrategy, kLine_type
 
 
 binan = BinanceAPI(api_key,api_secret)
@@ -284,7 +284,7 @@ class OrderManager(object):
         return newQuantity
 
     def binance_func(self):
-        print("币种= "+self.trade_coin)
+        print("交易币种: " + self.trade_coin)
         try:
             self.gain_exchangeRule(self.symbol)
 
@@ -336,7 +336,6 @@ class OrderManager(object):
                         print("购买结果：")
                         print(res_order_buy)
 
-
                         # 存储买入订单信息
                         if res_order_buy is not None and "symbol" in res_order_buy:
                             res_order_buy["toBuy"] = trade_direction
@@ -347,7 +346,6 @@ class OrderManager(object):
 
                 elif trade_direction == "sell":
                     dictOrder = self.readOrderInfo(self.orderInfoSavePath)
-
 
                     if dictOrder is None:
                         msgInfo = msgInfo + "服务正常4--已无可售"
@@ -363,7 +361,7 @@ class OrderManager(object):
                         # 查询当前价格
                         cur_price = binan.get_ticker_price(self.symbol)
 
-                        if quantity<=0:
+                        if quantity <= 0:
                             msgInfo = msgInfo + "服务正常5--已无可售"
                             isDefaultToken = True
                         else:
@@ -390,6 +388,7 @@ class OrderManager(object):
 
             print("-----------------------------------------------\n")
         except Exception as ex:
+            traceback.print_exc()  # 打印完整堆栈
             err_str = "出现如下异常：%s" % ex
             print(err_str)
             msgInfo = msgInfo + str(err_str) + "\n"

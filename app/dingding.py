@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
-# @Site    :
-# @File    : dingding.py
-# @Software: PyCharm
+
 import requests,json
 
 # windows

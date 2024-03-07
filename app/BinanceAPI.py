@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/4/30 11:24
 # @Author  : Ryan
-# @Site    :
-# @File    : BinanceAPI.py
-# @Software: PyCharm
-import requests, time, hmac, hashlib
-from app.authorization import recv_window,api_secret,api_key
+
+import hashlib
+import hmac
+import requests
+import time
+
+from app.authorization import recv_window
 
 try:
     from urllib import urlencode

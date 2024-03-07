@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
-# @Site    :
-# @File    : DoubleAverageLinesStrategy.py
-# @Software: PyCharm
 
 import json
-import numpy as np
-import pandas as pd
 import time
-import datetime
+
+import pandas as pd
+
 
 class DoubleAverageLines:
 
@@ -49,7 +46,6 @@ class DoubleAverageLines:
         dealBuyVolumeList = []
         dealBuyTotalMoneyList = []
 
-
         for kline in klines:
             if (type(kline)).__name__ == 'list':
                 openTimeList.append(self.stampToTime(kline[0]))
@@ -75,7 +71,6 @@ class DoubleAverageLines:
 
         return klines_df
 
-
     def readJsonFromFile(self, filePath):
         # Opening JSON file
         f = open(filePath, )
@@ -91,7 +86,6 @@ class DoubleAverageLines:
             return data
 
         return None
-
 
     def release_trade_stock(self, ma_x_line, ma_y_line, code, df):
 
@@ -146,12 +140,9 @@ class DoubleAverageLines:
         s = s1.append(s2)  # 合并
         s = s.sort_index(ascending=True)  # 排序
 
-        # print("金叉和死叉对应的时间：")
-        # print(s)
+        print("金叉和死叉对应的时间：", s)
 
         hold = 0  # 持有的股数
-
-        trade_buy_price = 0
 
         for i in range(0, len(s)):
 
@@ -192,9 +183,6 @@ class DoubleAverageLines:
         print("release_trade_stock---None")
 
         return None
-
-
-
 
     # 判断当前时间，是否在k线时间范围内
     def judgeCurrentTimeWithLastRecordTime(self, openTime, closeTime):
