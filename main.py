@@ -68,6 +68,6 @@ def tasklist():
 # 调试看报错运行下面，正式运行用上面
 if __name__ == "__main__":
     # 启动，先从币安获取交易规则：https://api.binance.com/api/v3/exchangeInfo
-    # tasklist()
+    tasklist()
 
-    binance_func()
+    # binance_func()

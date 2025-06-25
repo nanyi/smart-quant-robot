@@ -199,7 +199,7 @@ class DoubleAverageLines:
         s = s1.append(s2)  # 合并
         s = s.sort_index(ascending=True)  # 排序
 
-        print("金叉和死叉对应的时间：", s)
+        # print("金叉和死叉对应的时间：", s)
 
         hold = 0  # 持有的股数
 
@@ -216,7 +216,8 @@ class DoubleAverageLines:
                 isRightTime = self.judgeCurrentTimeWithLastRecordTime(str(open_time), str(close_time))
 
                 str_date = str(golden_time)
-                print(str_date + "\t" + "买入" + code + "\t" + str(round(trade_buy_price, 8)) + "---" + str(isRightTime))
+                print(
+                    str_date + "\t" + "买入" + code + "\t" + str(round(trade_buy_price, 8)) + "---" + str(isRightTime))
                 if isRightTime:
                     print("release_trade_stock---buy")
                     return "buy," + str(open_time)
@@ -232,7 +233,8 @@ class DoubleAverageLines:
                 isRightTime = self.judgeCurrentTimeWithLastRecordTime(str(open_time), str(close_time))
 
                 str_date = str(death_time)
-                print(str_date + "\t" + "卖出" + str(code) + "\t" + str(round(trade_sell_price, 8)) + "---" + str(isRightTime))
+                print(str_date + "\t" + "卖出" + str(code) + "\t" + str(round(trade_sell_price, 8)) + "---" + str(
+                    isRightTime))
                 if isRightTime:
                     print("release_trade_stock---sell")
                     return "sell," + str(open_time)
@@ -266,10 +268,10 @@ class DoubleAverageLines:
         now02 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now / 1000))
 
         if now02 >= openTime and now02 <= closeTime:
-            # print("成功---"+openTime+"\t"+now02+"\t"+closeTime)
+            # print("成功---" + openTime + "\t" + now02 + "\t" + closeTime)
             return True
         else:
-            # print("失败---"+openTime+"\t"+now02+"\t"+closeTime)
+            # print("失败---" + openTime + "\t" + now02 + "\t" + closeTime)
             return False
 
     def stampToTime(self, stamp):

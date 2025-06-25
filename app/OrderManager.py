@@ -445,7 +445,7 @@ class OrderManager(object):
             # 记录执行时间
             now = datetime.datetime.now()
             ts = now.strftime('%Y-%m-%d %H:%M:%S')
-            print('do func time：', ts)
+            print('执行开始时间：', ts)
             msgInfo = msgInfo + str(ts) + "\n"
 
             # 获取K线数据
