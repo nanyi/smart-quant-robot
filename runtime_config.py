@@ -2,7 +2,7 @@
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
 
-# 是否分批卖出
+# 是否网格分批卖出
 isOpenSellStrategy = True
 # 分批卖出，盈利百分比
 sellStrategy1 = {"profit": 1.05, "sell": 0.1}  # 盈利5%时，卖出10%的仓位

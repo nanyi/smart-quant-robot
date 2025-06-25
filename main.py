@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
-from app.dingding import Message
-from app.OrderManager import OrderManager
 
 import datetime
 import time
 
 import schedule
-import math
-import json,os
-from runtime_config import binance_market,binance_coinBase,binance_tradeCoin, binance_coinBase_count
 
+from app.OrderManager import OrderManager
+from app.dingding import Message
+from runtime_config import binance_market
 
 orderManager_doge = OrderManager("USDT", 100, "DOGE", binance_market)
 
@@ -19,9 +17,14 @@ orderManager_eth = OrderManager("USDT", 100, "ETH", binance_market)
 
 msgDing = Message()
 
-# 发送消息通知
 
 def dingding_notifier(message, isDefaultToken):
+    """
+    发送钉钉消息通知
+    :param message:
+    :param isDefaultToken:
+    :return:
+    """
     # 记录执行时间
     now = datetime.datetime.now()
     ts = now.strftime('%Y-%m-%d %H:%M:%S')
@@ -40,9 +43,11 @@ def send_service_info():
     dingding_notifier(str, True)
 
 
-# 创建循环任务
 def tasklist():
-    #清空任务
+    """
+    创建循环任务
+    :return:
+    """
     print("服务启动")
     # 清空任务
     schedule.clear()
@@ -62,9 +67,7 @@ def tasklist():
 
 # 调试看报错运行下面，正式运行用上面
 if __name__ == "__main__":
+    # 启动，先从币安获取交易规则：https://api.binance.com/api/v3/exchangeInfo
+    # tasklist()
 
-    # 启动，先从币安获取交易规则， https://api.binance.com/api/v3/exchangeInfo
-    tasklist()
-
-    # binance_func()
-
+    binance_func()
