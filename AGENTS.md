@@ -298,8 +298,9 @@ binance:
   proxy_port: 7890
 
 dingding:
-  token: ""             # 钉钉群Token（告警）
-  token2: ""            # 钉钉群Token（交易）
+  enabled: true        # 是否开启钉钉通知
+  token: ""            # 钉钉群Token（告警）
+  token2: ""           # 钉钉群Token（交易）
 
 trade:
   ma_x: 5               # 短周期均线
