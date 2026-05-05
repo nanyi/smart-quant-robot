@@ -25,6 +25,12 @@ _DEFAULT_CONFIG = {
         'token': '',
         'token2': '',
     },
+    'weixin': {
+        'corp_id': '',
+        'secret': '',
+        'agent_id': 0,
+        'to_user': '@all',
+    },
     'trade': {
         'ma_x': 5,
         'ma_y': 60,
