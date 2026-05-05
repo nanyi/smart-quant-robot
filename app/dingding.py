@@ -6,7 +6,6 @@ import json
 
 import requests
 
-from app.BinanceAPI import BinanceAPI
 from runtime_config import config
 
 
@@ -18,53 +17,6 @@ class Message:
     自动通知以及异常情况的告警推送。可配置多个钉钉token实现分级通知。
     """
 
-    def buy_limit_msg(self, market, quantity, rate):
-        """
-        执行限价买单并发送钉钉通知
-        
-        调用Binance API创建限价买单，根据下单结果发送成功或失败的钉钉通知。
-        
-        :param market: 交易对符号，例如 'BTCUSDT'
-        :param quantity: 购买数量
-        :param rate: 限价价格
-        :return: 成功时返回订单响应字典，失败时无返回值
-        """
-        try:
-            res = BinanceAPI().buy_limit(market, quantity, rate)
-            if res['orderId']:
-                buy_info = "报警：币种为：{cointype}。买单价为：{price}。买单量为：{num}".format(cointype=market, price=rate,
-                                                                                           num=quantity)
-                self.dingding_warn(buy_info)
-                return res
-        except BaseException as e:
-            error_info = "报警：币种为：{cointype},买单失败.api返回内容为:{reject}".format(cointype=market,
-                                                                                         reject=res['msg'])
-            self.dingding_warn(error_info)
-
-    def sell_limit_msg(self, market, quantity, rate):
-        """
-        执行限价卖单并发送钉钉通知
-        
-        调用Binance API创建限价卖单，根据下单结果发送成功或失败的钉钉通知。
-        
-        :param market: 交易对符号，例如 'BTCUSDT'
-        :param quantity: 卖出数量
-        :param rate: 限价价格
-        :return: 订单响应字典（无论成功或失败都返回）
-        """
-        try:
-            res = BinanceAPI().sell_limit(market, quantity, rate)
-            if res['orderId']:
-                buy_info = "报警：币种为：{cointype}。卖单价为：{price}。卖单量为：{num}".format(cointype=market, price=rate,
-                                                                                           num=quantity)
-                self.dingding_warn(buy_info)
-                return res
-        except BaseException as e:
-            error_info = "报警：币种为：{cointype},卖单失败.api返回内容为:{reject}".format(cointype=market,
-                                                                                         reject=res['msg'])
-            self.dingding_warn(error_info + str(res))
-            return res
-
     def dingding_warn(self, text, isDefaultToken=True):
         """
         发送钉钉告警消息
@@ -75,6 +27,10 @@ class Message:
         :param text: 要发送的消息内容
         :param isDefaultToken: 是否使用默认token，True使用主token，False使用备用token
         """
+        # 钉钉通知未启用，直接返回
+        if not config.get('dingding.enabled', True):
+            return
+
         tmpToken = config.get('dingding.token', '') if isDefaultToken else config.get('dingding.token2', '')
         if (tmpToken == ''):
             print('dingidng:' + text)
@@ -113,4 +69,5 @@ class Message:
 
 if __name__ == "__main__":
     msg = Message()
-    print(msg.buy_limit_msg("EOSUSDT", 4, 2))
+    msg.dingding_warn("钉钉消息推送", True)
+    msg.dingding_warn("钉钉消息推送token2", True)
