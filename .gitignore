@@ -45,6 +45,7 @@ deploy/
 brother3.py
 doc/
 migrations/
+AI.txt
 # ===== IDE / Editor =====
 .idea/
 .vscode/
