@@ -18,6 +18,7 @@ _DEFAULT_CONFIG = {
         'proxy_port': 7890,
     },
     'dingding': {
+        'enabled': True,
         'token': '',
         'token2': '',
     },
@@ -123,13 +124,19 @@ class Config:
             try:
                 with connection.cursor(pymysql.cursors.DictCursor) as cursor:
                     cursor.execute(
-                        'SELECT api_key, api_secret FROM binance_config WHERE enabled = 1 ORDER BY id DESC LIMIT 1'
+                        'SELECT api_key, api_secret, dingding_token, dingding_token2 FROM binance_config WHERE enabled = 1 ORDER BY id DESC LIMIT 1'
                     )
                     result = cursor.fetchone()
-                    if result and result.get('api_key'):
-                        self._config['binance']['api_key'] = result['api_key']
-                        self._config['binance']['api_secret'] = result['api_secret']
-                        print('已从 MySQL 加载 Binance API 配置')
+                    if result:
+                        if result.get('api_key'):
+                            self._config['binance']['api_key'] = result['api_key']
+                            self._config['binance']['api_secret'] = result['api_secret']
+                            print('已从 MySQL 加载 Binance API 配置')
+                        if result.get('dingding_token') is not None:
+                            self._config['dingding']['token'] = result['dingding_token']
+                            print('已从 MySQL 加载钉钉配置')
+                        if result.get('dingding_token2') is not None:
+                            self._config['dingding']['token2'] = result['dingding_token2']
                     else:
                         print('MySQL 中没有启用的 Binance 配置，使用 YAML 或默认配置')
             finally:
