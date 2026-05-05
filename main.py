@@ -8,7 +8,7 @@ import time
 import schedule
 
 from app.OrderManager import OrderManager
-from app.dingding import Message
+from app.notifier import get_notifier
 from runtime_config import config
 
 orderManager_doge = OrderManager(
@@ -25,7 +25,7 @@ orderManager_eth = OrderManager(
     config.get('trade.binance_market', 'SPOT')
 )
 
-msgDing = Message()
+msgDing = get_notifier()
 
 
 def dingding_notifier(message, isDefaultToken):
