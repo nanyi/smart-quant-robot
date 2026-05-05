@@ -394,10 +394,13 @@ class OrderManager(object):
         millis_stamp = int(round(time.time() * 1000))
 
         # 如何处理虚假买点和虚假卖点，1000条数据中，第一条可能产生虚假的买点和卖点
-        kline_json = binan.get_klines(symbol, timeInterval, 1000, None, millis_stamp)
-        if type(kline_json).__name__ == 'list':
-            return kline_json
-        else:
+        try:
+            kline_json = binan.get_klines(symbol, timeInterval, 1000, None, millis_stamp)
+            if type(kline_json).__name__ == 'list':
+                return kline_json
+        except Exception as e:
+            print(e)
+        finally:
             return None
 
     # 根据交易规则，格式化交易量

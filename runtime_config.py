@@ -14,9 +14,11 @@ _DEFAULT_CONFIG = {
         'api_key': '',
         'api_secret': '',
         'recv_window': 5000,
-        'proxy_enabled': False,
-        'proxy_host': '127.0.0.1',
-        'proxy_port': 7890,
+        'proxy': {
+            'enabled': False,
+            'host': '127.0.0.1',
+            'port': 7890,
+        },
     },
     'dingding': {
         'enabled': True,

@@ -43,9 +43,9 @@ class BinanceAPI(object):
         self.key = key if key is not None else config.get('binance.api_key', '')
         self.secret = secret if secret is not None else config.get('binance.api_secret', '')
 
-        if config.get('binance.proxy_enabled', False):
-            proxy_host = proxy_host or config.get('binance.proxy_host', '127.0.0.1')
-            proxy_port = proxy_port or config.get('binance.proxy_port', 7890)
+        if config.get('binance.proxy.enabled', False):
+            proxy_host = proxy_host or config.get('binance.proxy.host', '127.0.0.1')
+            proxy_port = proxy_port or config.get('binance.proxy.port', 7890)
             self.proxies = {
                 "http": f"http://{proxy_host}:{proxy_port}",
                 "https": f"http://{proxy_host}:{proxy_port}",
