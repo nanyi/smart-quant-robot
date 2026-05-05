@@ -304,6 +304,17 @@ dingding:
   token: ""            # 钉钉群Token（告警）
   token2: ""           # 钉钉群Token（交易）
 
+notifier:
+  enabled: true
+  provider: "dingding"  # dingding | weixin
+
+weixin:
+  enabled: false
+  corp_id: ""
+  secret: ""
+  agent_id: 0
+  to_user: "@all"
+
 trade:
   ma_x: 5               # 短周期均线
   ma_y: 60              # 长周期均线
