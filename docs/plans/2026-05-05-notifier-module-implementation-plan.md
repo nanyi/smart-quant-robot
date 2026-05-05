@@ -499,8 +499,10 @@ git commit -m "feat(db): binance_config表增加企业微信字段"
 **Step 1: 修改导入和使用**
 
 找到：
+
 ```python
-from app.dingding import Message
+from app.notifier.dingding import Message
+
 msg = Message()
 ```
 

@@ -24,7 +24,7 @@ class Notifier(ABC):
         发送消息
         
         :param text: 消息内容
-        :param is_default: 是否使用主配置（True用token，False用备用）
+        :param is_default: 是否使用主配置（True用主配置，False用备用）
         :return: 是否发送成功
         """
         pass

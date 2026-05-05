@@ -15,7 +15,7 @@ from runtime_config import config
 from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
 
 binan = BinanceAPI()
-msg = get_notifier()
+notifier = get_notifier()
 
 dALines = DoubleAverageLines()
 
@@ -439,11 +439,11 @@ class OrderManager(object):
 
         异常处理：捕获所有异常并打印堆栈跟踪，同时通过钉钉发送错误信息。
         """
+        msgInfo = ""
         print("交易币种: " + self.trade_coin)
         try:
             self.gain_exchangeRule(self.symbol)
 
-            msgInfo = ""  # 钉钉消息
             isDefaultToken = False
 
             # 记录执行时间
@@ -454,6 +454,11 @@ class OrderManager(object):
 
             # 获取K线数据
             kline_list = self.gain_kline(self.symbol, config.get('trade.kLine_type', '15m'))
+            if kline_list is None:
+                msgInfo = msgInfo + "获取K线数据失败"
+                print("获取K线数据失败")
+                return
+
             # k线数据转为 DataFrame格式
             kline_df = dALines.klinesToDataFrame(kline_list)
 
@@ -542,7 +547,7 @@ class OrderManager(object):
 
             print("-----------------------------------------------\n")
         except Exception as ex:
-            traceback.print_exc()  # 打印完整堆栈
+            # traceback.print_exc()  # 打印完整堆栈
             err_str = "出现如下异常：%s" % ex
             print(err_str)
             msgInfo = msgInfo + str(err_str) + "\n"
@@ -551,7 +556,7 @@ class OrderManager(object):
             if "服务正常" in msgInfo:
                 pass
             else:
-                msg.dingding_warn(msgInfo, isDefaultToken)
+                notifier.send(msgInfo, isDefaultToken)
 
     def get_spot_asset_by_symbol(self, symbol):
         """
