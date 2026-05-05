@@ -11,7 +11,7 @@ from app.authorization import api_key, api_secret
 from app.dingding import Message
 from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
 import schedule
-from runtime_config import sellStrategy1, sellStrategy2, sellStrategy3, ma_x, ma_y, isOpenSellStrategy, kLine_type
+from runtime_config import config
 
 binan = BinanceAPI(api_key, api_secret)
 msg = Message()
@@ -367,10 +367,10 @@ class OrderManager(object):
         :param dictObj: 要保存的订单信息字典对象
         """
 
-        if isOpenSellStrategy:
-            dictObj["sellStrategy1"] = sellStrategy1
-            dictObj["sellStrategy2"] = sellStrategy2
-            dictObj["sellStrategy3"] = sellStrategy3
+        if config.get('trade.isOpenSellStrategy', False):
+            dictObj["sellStrategy1"] = config.get('trade.sellStrategy1')
+            dictObj["sellStrategy2"] = config.get('trade.sellStrategy2')
+            dictObj["sellStrategy3"] = config.get('trade.sellStrategy3')
 
         self.writeOrderInfo(filePath, dictObj)
 
@@ -449,12 +449,12 @@ class OrderManager(object):
             msgInfo = msgInfo + str(ts) + "\n"
 
             # 获取K线数据
-            kline_list = self.gain_kline(self.symbol, kLine_type)
+            kline_list = self.gain_kline(self.symbol, config.get('trade.kLine_type', '15m'))
             # k线数据转为 DataFrame格式
             kline_df = dALines.klinesToDataFrame(kline_list)
 
             # 判断交易方向
-            trade_direction = dALines.release_trade_stock(ma_x, ma_y, self.symbol, kline_df)
+            trade_direction = dALines.release_trade_stock(config.get('trade.ma_x', 5), config.get('trade.ma_y', 60), self.symbol, kline_df)
 
             if trade_direction is not None:
 
@@ -526,7 +526,7 @@ class OrderManager(object):
                             msgInfo = "卖出结果：\n" + str(order_result_str)
 
             else:
-                if isOpenSellStrategy:
+                if config.get('trade.isOpenSellStrategy', False):
                     print("开启卖出策略---1")
                     msgInfo = self.sellStrategy(self.orderInfoSavePath)
 
