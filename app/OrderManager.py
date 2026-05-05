@@ -468,7 +468,6 @@ class OrderManager(object):
                     else:
                         isDefaultToken = False
 
-                        # coin_base = "USDT"
                         asset_coin = binan.get_spot_asset_by_symbol(self.coin_base)
                         print(self.coin_base + " 资产：" + str(asset_coin))
 
@@ -549,3 +548,13 @@ class OrderManager(object):
                 pass
             else:
                 msg.dingding_warn(msgInfo, isDefaultToken)
+
+    def get_spot_asset_by_symbol(self, symbol):
+        """
+        获取指定交易币种的资产信息
+        :param symbol: 交易币种
+        :return:
+        """
+        asset_info = binan.get_spot_asset_by_symbol(symbol)
+        return asset_info
+

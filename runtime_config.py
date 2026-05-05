@@ -17,6 +17,6 @@ ma_y = 60
 binance_market = "SPOT"  # 现货市场
 binance_coinBase = "USDT"  # 使用USDT作为基础币种，用于购买其他货币；
 # 允许使用账户中的 binance_coinBase 对应个数，每次买入 最多使用 binance_coinBase_count 个 binance_coinBase
-binance_coinBase_count = 100  # 代表100个USDT
+binance_coinBase_count = 20  # 代表100个USDT
 binance_tradeCoin = "DOGE"  # 交易目标是 DOGE 币，
-kLine_type = '1h'  # 15分钟k线类型，可以设置为5分钟K线：5m; 1小时为：1h; 1天为：1d
+kLine_type = '15m'  # 15分钟k线类型，可以设置为5分钟K线：5m; 1小时为：1h; 1天为：1d

@@ -195,7 +195,7 @@ class BinanceAPI(object):
                         return balance
 
     # 查询每日资产快照，/sapi/v1/accountSnapshot
-    def get_UserData_accountSnapshot(self):
+    def get_UserData_accountSnapshot(self, market="SPOT"):
         """
         获取账户每日资产快照历史
         
@@ -205,7 +205,7 @@ class BinanceAPI(object):
         """
         stamp_now = int(round(time.time() * 1000))
         path = "https://www.binance.com/sapi/v1/accountSnapshot"
-        params = {"type": "SPOT", "timestamp": stamp_now, "limit": 5}
+        params = {"type": market, "timestamp": stamp_now, "limit": 5}
 
         # res = self._post(path, params)
         res = self._get_with_sign(path, params).json()

@@ -177,10 +177,10 @@ class DoubleAverageLines:
         #     print(str(row["openTime"]) + "\t" + row["openPrice"] + "\t" + row["maxPrice"] + "\t" + row[
         #         "minPrice"] + "\t" + row["closePrice"] + "\t" + str(row["closeTime"]) + "\t")
 
-        print("最后一行数据：")
-        last_row = df.iloc[-1, :]  # 第1行，所有列
-        print(str(last_row["openTime"]) + "\t" + last_row["openPrice"] + "\t" + last_row["maxPrice"] + "\t" + last_row[
-            "minPrice"] + "\t" + last_row["closePrice"] + "\t" + str(last_row["closeTime"]) + "\t")
+        # print("最后一行数据：")
+        # last_row = df.iloc[-1, :]  # 第1行，所有列
+        # print(str(last_row["openTime"]) + "\t" + last_row["openPrice"] + "\t" + last_row["maxPrice"] + "\t" + last_row[
+        #     "minPrice"] + "\t" + last_row["closePrice"] + "\t" + str(last_row["closeTime"]) + "\t")
 
         print("-------------------------------------------------------\n")
         s1 = maX < maY  # 得到 bool 类型的 Series
@@ -215,9 +215,9 @@ class DoubleAverageLines:
 
                 isRightTime = self.judgeCurrentTimeWithLastRecordTime(str(open_time), str(close_time))
 
-                str_date = str(golden_time)
-                print(
-                    str_date + "\t" + "买入" + code + "\t" + str(round(trade_buy_price, 8)) + "---" + str(isRightTime))
+                # str_date = str(golden_time)
+                # print(
+                #     str_date + "\t" + "买入" + code + "\t" + str(round(trade_buy_price, 8)) + "---" + str(isRightTime))
                 if isRightTime:
                     print("release_trade_stock---buy")
                     return "buy," + str(open_time)
@@ -232,9 +232,9 @@ class DoubleAverageLines:
 
                 isRightTime = self.judgeCurrentTimeWithLastRecordTime(str(open_time), str(close_time))
 
-                str_date = str(death_time)
-                print(str_date + "\t" + "卖出" + str(code) + "\t" + str(round(trade_sell_price, 8)) + "---" + str(
-                    isRightTime))
+                # str_date = str(death_time)
+                # print(str_date + "\t" + "卖出" + str(code) + "\t" + str(round(trade_sell_price, 8)) + "---" + str(
+                #     isRightTime))
                 if isRightTime:
                     print("release_trade_stock---sell")
                     return "sell," + str(open_time)
@@ -259,16 +259,15 @@ class DoubleAverageLines:
         dateTime_interval = pd.to_datetime(closeTime) - pd.to_datetime(openTime)
 
         seconds_interval = dateTime_interval.seconds  # int类型，秒数
-        # print("seconds_interval 的类型=")
-        # print(type(seconds_interval))
-        # print(seconds_interval)
+        # print("seconds_interval 的类型=", type(seconds_interval))
+        # print("seconds_interval 的值=", seconds_interval)
 
         now = int(round((time.time() - seconds_interval) * 1000))
 
         now02 = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now / 1000))
 
         if now02 >= openTime and now02 <= closeTime:
-            # print("成功---" + openTime + "\t" + now02 + "\t" + closeTime)
+            print("成功---" + openTime + "\t" + now02 + "\t" + closeTime)
             return True
         else:
             # print("失败---" + openTime + "\t" + now02 + "\t" + closeTime)
@@ -276,7 +275,7 @@ class DoubleAverageLines:
 
     def stampToTime(self, stamp):
         """
-        将毫秒时间戳转换为可读的时间字符串
+        将UTC毫秒时间戳转换为可读的本地时间字符串
 
         将Binance API返回的毫秒级Unix时间戳转换为 'YYYY-MM-DD HH:MM:SS' 格式。
 

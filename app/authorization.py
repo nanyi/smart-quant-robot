@@ -2,9 +2,9 @@
 # @Time    : 2021/4/30 11:24
 # @Author  : Ryan
 
+# 币安测试账号
 api_key = ''
 api_secret = ''
-# 币安测试账号
 
 
 recv_window = 5000

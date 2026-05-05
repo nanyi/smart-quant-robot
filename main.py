@@ -9,11 +9,11 @@ import schedule
 
 from app.OrderManager import OrderManager
 from app.dingding import Message
-from runtime_config import binance_market
+from runtime_config import binance_market, binance_coinBase, binance_coinBase_count, binance_tradeCoin
 
-orderManager_doge = OrderManager("USDT", 100, "DOGE", binance_market)
+orderManager_doge = OrderManager(binance_coinBase, binance_coinBase_count, binance_tradeCoin, binance_market)
 
-orderManager_eth = OrderManager("USDT", 100, "ETH", binance_market)
+orderManager_eth = OrderManager(binance_coinBase, binance_coinBase_count, "ETH", binance_market)
 
 msgDing = Message()
 
@@ -71,3 +71,5 @@ if __name__ == "__main__":
     tasklist()
 
     # binance_func()
+    # t = orderManager_eth.get_spot_asset_by_symbol(binance_coinBase)
+    # print(t)
