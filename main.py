@@ -9,11 +9,21 @@ import schedule
 
 from app.OrderManager import OrderManager
 from app.dingding import Message
-from runtime_config import binance_market, binance_coinBase, binance_coinBase_count, binance_tradeCoin
+from runtime_config import config
 
-orderManager_doge = OrderManager(binance_coinBase, binance_coinBase_count, binance_tradeCoin, binance_market)
+orderManager_doge = OrderManager(
+    config.get('trade.binance_coinBase', 'USDT'),
+    config.get('trade.binance_coinBase_count', 20),
+    config.get('trade.binance_tradeCoin', 'DOGE'),
+    config.get('trade.binance_market', 'SPOT')
+)
 
-orderManager_eth = OrderManager(binance_coinBase, binance_coinBase_count, "ETH", binance_market)
+orderManager_eth = OrderManager(
+    config.get('trade.binance_coinBase', 'USDT'),
+    config.get('trade.binance_coinBase_count', 20),
+    "ETH",
+    config.get('trade.binance_market', 'SPOT')
+)
 
 msgDing = Message()
 
