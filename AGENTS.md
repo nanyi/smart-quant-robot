@@ -294,6 +294,7 @@ binance:
   api_key: ""           # 币安API密钥
   api_secret: ""        # 币安API私钥
   recv_window: 5000     # 请求超时时间
+  proxy_enabled: false  # 是否开启代理（默认关闭）
   proxy_host: "127.0.0.1"
   proxy_port: 7890
 
