@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import os
 import copy
-import yaml
-import pymysql
+import os
 from typing import Any
+
+import pymysql
+import yaml
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 CONFIG_YAML = os.path.join(REPO_ROOT, 'config.yaml')

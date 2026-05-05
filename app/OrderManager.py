@@ -2,18 +2,19 @@
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
 
-import json, os, time, datetime, math
+import datetime
+import json
+import math
+import os
+import time
 import traceback
 
 from app.BinanceAPI import BinanceAPI
-
-from app.authorization import api_key, api_secret
 from app.dingding import Message
-from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
-import schedule
 from runtime_config import config
+from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
 
-binan = BinanceAPI(api_key, api_secret)
+binan = BinanceAPI()
 msg = Message()
 
 dALines = DoubleAverageLines()

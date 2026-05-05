@@ -4,8 +4,9 @@
 
 import hashlib
 import hmac
-import requests
 import time
+
+import requests
 
 from runtime_config import config
 

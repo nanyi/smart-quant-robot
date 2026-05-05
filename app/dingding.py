@@ -2,13 +2,13 @@
 # @Time    : 2021/4/30 11:25
 # @Author  : Ryan
 
-import requests,json
+import json
 
-# windows
-from app.authorization import dingding_token, dingding_token2, recv_window,api_secret,api_key
+import requests
+
 from app.BinanceAPI import BinanceAPI
-# linux
-# from app.authorization import dingding_token
+from runtime_config import config
+
 
 class Message:
     """
@@ -30,7 +30,7 @@ class Message:
         :return: 成功时返回订单响应字典，失败时无返回值
         """
         try:
-            res = BinanceAPI(api_key, api_secret).buy_limit(market, quantity, rate)
+            res = BinanceAPI().buy_limit(market, quantity, rate)
             if res['orderId']:
                 buy_info = "报警：币种为：{cointype}。买单价为：{price}。买单量为：{num}".format(cointype=market, price=rate,
                                                                                            num=quantity)
@@ -53,7 +53,7 @@ class Message:
         :return: 订单响应字典（无论成功或失败都返回）
         """
         try:
-            res = BinanceAPI(api_key, api_secret).sell_limit(market, quantity, rate)
+            res = BinanceAPI().sell_limit(market, quantity, rate)
             if res['orderId']:
                 buy_info = "报警：币种为：{cointype}。卖单价为：{price}。卖单量为：{num}".format(cointype=market, price=rate,
                                                                                            num=quantity)
@@ -75,7 +75,7 @@ class Message:
         :param text: 要发送的消息内容
         :param isDefaultToken: 是否使用默认token，True使用主token，False使用备用token
         """
-        tmpToken = dingding_token if isDefaultToken else dingding_token2
+        tmpToken = config.get('dingding.token', '') if isDefaultToken else config.get('dingding.token2', '')
         if (tmpToken == ''):
             print('dingidng:' + text)
             return
@@ -110,6 +110,7 @@ class Message:
         }
         return json_text
 
+
 if __name__ == "__main__":
     msg = Message()
-    print(msg.buy_limit_msg("EOSUSDT",4,2))
+    print(msg.buy_limit_msg("EOSUSDT", 4, 2))
