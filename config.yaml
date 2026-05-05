@@ -1,3 +1,19 @@
+notifier:
+  enabled: true
+  provider: "dingding"  # dingding | weixin
+
+dingding:
+  enabled: true
+  token: ""
+  token2: ""
+
+weixin:
+  enabled: false
+  corp_id: ""
+  secret: ""
+  agent_id: 0
+  to_user: "@all"
+
 binance:
   api_key: ""
   api_secret: ""
@@ -6,11 +22,6 @@ binance:
     enabled: false
     host: "127.0.0.1"
     port: 7890
-
-dingding:
-  enabled: true
-  token: ""
-  token2: ""
 
 trade:
   ma_x: 5
