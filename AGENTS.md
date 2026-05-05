@@ -280,3 +280,85 @@ sellStrategy1 = {"profit": 1.05, "sell": 0.1}  # 盈利5%时卖出10%仓位
 - 复杂业务逻辑必须添加注释说明
 - 注释使用中文
 - 禁止无意义的注释（如 `# 注释`）
+
+---
+
+## 8. 配置管理规范
+
+### 8.1 配置文件结构
+
+项目使用 `config.yaml` 作为配置文件，集中管理所有配置项：
+
+```yaml
+binance:
+  api_key: ""           # 币安API密钥
+  api_secret: ""        # 币安API私钥
+  recv_window: 5000     # 请求超时时间
+  proxy_host: "127.0.0.1"
+  proxy_port: 7890
+
+dingding:
+  token: ""             # 钉钉群Token（告警）
+  token2: ""            # 钉钉群Token（交易）
+
+trade:
+  ma_x: 5               # 短周期均线
+  ma_y: 60              # 长周期均线
+  kLine_type: '15m'     # K线周期
+  binance_market: "SPOT"
+  binance_coinBase: "USDT"
+  binance_coinBase_count: 20
+  binance_tradeCoin: "DOGE"
+  isOpenSellStrategy: true
+  sellStrategy1: {"profit": 1.05, "sell": 0.1}
+  sellStrategy2: {"profit": 1.10, "sell": 0.2}
+  sellStrategy3: {"profit": 1.20, "sell": 0.2}
+
+mysql:
+  enabled: false        # 是否从MySQL加载配置
+  host: "localhost"
+  port: 3306
+  user: "root"
+  password: ""
+  database: "smart_quant"
+  charset: "utf8mb4"
+```
+
+### 8.2 配置加载优先级
+
+1. **MySQL数据库**（如果 enabled=true 且有数据）> **config.yaml** > **默认值**
+
+### 8.3 MySQL配置存储
+
+创建 `sql/init_mysql.sql` 初始化脚本，包含 `binance_config` 表：
+
+```sql
+CREATE TABLE IF NOT EXISTS `binance_config` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `api_key` VARCHAR(256) NOT NULL,
+  `api_secret` VARCHAR(256) NOT NULL,
+  `enabled` TINYINT DEFAULT 1,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 8.4 配置访问方式
+
+使用全局配置单例：
+
+```python
+from runtime_config import config
+
+# 获取配置
+api_key = config.get('binance.api_key')
+ma_x = config.get('trade.ma_x', 5)  # 带默认值
+
+# 设置配置
+config.set('trade.ma_x', 10)
+```
+
+### 8.5 禁止硬编码
+
+- 所有配置必须通过 `config.get()` 获取
+- 禁止在代码中硬编码 API 密钥、token 等敏感信息
+- 默认值应放在 `runtime_config.py` 的 `_DEFAULT_CONFIG` 中
