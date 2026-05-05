@@ -7,7 +7,7 @@ import hmac
 import requests
 import time
 
-from app.authorization import recv_window
+from runtime_config import config
 
 try:
     from urllib import urlencode
@@ -30,7 +30,7 @@ class BinanceAPI(object):
     BASE_URL_V3 = "https://api.binance.com/api/v3"
     PUBLIC_URL = "https://www.binance.com/exchange/public/product"
 
-    def __init__(self, key, secret, proxy_host="127.0.0.1", proxy_port=7890):
+    def __init__(self, key=None, secret=None, proxy_host=None, proxy_port=None):
         """
         初始化Binance API客户端
         
@@ -39,14 +39,14 @@ class BinanceAPI(object):
         :param proxy_host: 代理服务器主机地址，默认为本地回环地址
         :param proxy_port: 代理服务器端口，默认为7890
         """
-        self.key = key
-        self.secret = secret
-        # 全局代理配置
+        self.key = key if key is not None else config.get('binance.api_key', '')
+        self.secret = secret if secret is not None else config.get('binance.api_secret', '')
+        proxy_host = proxy_host or config.get('binance.proxy_host', '127.0.0.1')
+        proxy_port = proxy_port or config.get('binance.proxy_port', 7890)
         self.proxies = {
             "http": f"http://{proxy_host}:{proxy_port}",
             "https": f"http://{proxy_host}:{proxy_port}",
         }
-        self.proxies = None
 
     def ping(self):
         """
@@ -171,7 +171,7 @@ class BinanceAPI(object):
         """
         stamp_now = int(round(time.time() * 1000))
         path = "%s/account" % self.BASE_URL_V3
-        params = {"timestamp": stamp_now, "recvWindow": recv_window}
+        params = {"timestamp": stamp_now, "recvWindow": config.get('binance.recv_window', 5000)}
         res = self._get_with_sign(path, params)
         return res
 
@@ -407,7 +407,7 @@ class BinanceAPI(object):
         :param params: 订单参数字典（不包含signature和recvWindow）
         :return: API响应的JSON解析结果，包含订单详情
         """
-        params.update({"recvWindow": recv_window})
+        params.update({"recvWindow": config.get('binance.recv_window', 5000)})
         query = urlencode(self._sign(params))
         url = "%s" % (path)
         header = {"X-MBX-APIKEY": self.key}
@@ -443,7 +443,5 @@ class BinanceAPI(object):
 
 
 if __name__ == "__main__":
-    instance = BinanceAPI(api_key, api_secret)
-    # print(instance.buy_limit("EOSUSDT",5,2))
-    # print(instance.get_ticker_price("WINGUSDT"))
+    instance = BinanceAPI()
     print(instance.get_ticker_24hour("WINGUSDT"))
