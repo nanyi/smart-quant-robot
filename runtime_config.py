@@ -25,7 +25,12 @@ _DEFAULT_CONFIG = {
         'token': '',
         'token2': '',
     },
+    'notifier': {
+        'enabled': True,
+        'provider': 'dingding',
+    },
     'weixin': {
+        'enabled': False,
         'corp_id': '',
         'secret': '',
         'agent_id': 0,
