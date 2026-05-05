@@ -10,12 +10,12 @@ import time
 import traceback
 
 from app.BinanceAPI import BinanceAPI
-from app.dingding import Message
+from app.notifier import get_notifier
 from runtime_config import config
 from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
 
 binan = BinanceAPI()
-msg = Message()
+msg = get_notifier()
 
 dALines = DoubleAverageLines()
 
