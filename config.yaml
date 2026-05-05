@@ -6,6 +6,7 @@ binance:
   proxy_port: 7890
 
 dingding:
+  enabled: true
   token: ""
   token2: ""
 
@@ -29,10 +30,10 @@ trade:
     sell: 0.2
 
 mysql:
-  enabled: false
+  enabled: true
   host: "localhost"
   port: 3306
   user: "root"
-  password: ""
-  database: "smart_quant"
+  password: "rootroot"
+  database: "smart_quant_robot"
   charset: "utf8mb4"
