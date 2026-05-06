@@ -155,7 +155,7 @@ class OrderManager(object):
                 for tmp_symbol in symbol_list:
                     if tmp_symbol['symbol'] == theSymbol:
                         self.exchangeRule = ExchangeRule(tmp_symbol)
-                        break;
+                        break
 
         # return self.exchangeRule
 
@@ -589,7 +589,7 @@ class OrderManager(object):
 
             print("-----------------------------------------------\n")
         except Exception as ex:
-            # traceback.print_exc()  # 打印完整堆栈
+            traceback.print_exc()  # 打印完整堆栈
             err_str = "出现如下异常：%s" % ex
             print(err_str)
             msgInfo = msgInfo + str(err_str) + "\n"
@@ -611,7 +611,7 @@ class OrderManager(object):
             return pd.DataFrame()
         
         columns = ['openTime', 'openPrice', 'highPrice', 'lowPrice', 'closePrice', 
-                   'volume', 'closeTime', 'turnover', 'tradeCount', 'buyVolume', 'buyTurnover']
+                   'volume', 'closeTime', 'turnover', 'tradeCount', 'buyVolume', 'buyTurnover', 'ignore']
         df = pd.DataFrame(kline_list, columns=columns)
         df['openPrice'] = pd.to_numeric(df['openPrice'], errors='coerce')
         df['highPrice'] = pd.to_numeric(df['highPrice'], errors='coerce')
