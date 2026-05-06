@@ -42,11 +42,6 @@ trade:
     profit: 1.20
     sell: 0.2
 
-mysql:
+sqlite:
   enabled: true
-  host: "localhost"
-  port: 3306
-  user: "root"
-  password: "rootroot"
-  database: "smart_quant_robot"
-  charset: "utf8mb4"
+  db_path: "/data/db/smart_quant_robot.db"
