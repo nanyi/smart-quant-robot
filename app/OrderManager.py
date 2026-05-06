@@ -122,7 +122,7 @@ class OrderManager(object):
     自动化的交易决策和风险控制机制。
     """
 
-    def __init__(self, coinBase, coinBaseCount, tradeCoin, market):
+    def __init__(self, coinBase, coinBaseCount, tradeCoin, market, kline_service=None):
         """
         初始化订单管理器
 
@@ -130,7 +130,9 @@ class OrderManager(object):
         :param coinBaseCount: 用于购买的最大资金量（以基础计价货币计）
         :param tradeCoin: 要交易的币种，例如 'DOGE'、'BTC' 等
         :param market: 交易市场类型，例如 'SPOT'（现货）、'FUTURES'（合约）等
+        :param kline_service: K线服务实例（可选，默认使用KlineService）
         """
+        from app.services import KlineService
         self.coin_base = coinBase  # 基础币，例如USDT
         self.coin_base_count = coinBaseCount  # 买币时最多可用资金量
         self.trade_coin = tradeCoin  # 买卖币种，例如 DOGER
@@ -138,6 +140,7 @@ class OrderManager(object):
         self.symbol = tradeCoin + coinBase  # 交易符号，例如"DOGEUSDT"
         self.exchangeRule = None
         self.orderInfoSavePath = "./" + self.symbol + "_buyOrderInfo.json"  # 订单信息存储路径
+        self.kline_service = kline_service or KlineService()
 
     def gain_exchangeRule(self, theSymbol):
         """
@@ -496,14 +499,13 @@ class OrderManager(object):
             msgInfo = msgInfo + str(ts) + "\n"
 
             # 获取K线数据
-            kline_list = self.gain_kline(self.symbol, config.get('trade.kLine_type', '15m'))
-            if kline_list is None:
+            interval = config.get('trade.kLine_type', '15m')
+            kline_df = self.kline_service.get_kline_dataframe(self.symbol, interval, limit=1000)
+
+            if kline_df is None or kline_df.empty:
                 msgInfo = msgInfo + "服务正常1-获取K线数据失败"
                 print("获取K线数据失败")
                 return
-
-            # k线数据转为 DataFrame格式
-            kline_df = self._klines_to_dataframe(kline_list)
 
             # 获取策略并计算信号
             strategy = create_strategy()

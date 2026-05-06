@@ -9,7 +9,29 @@ import schedule
 
 from app.OrderManager import OrderManager
 from app.notifier import get_notifier
+from app.services import KlineService
+from db.manager import DBManager
 from runtime_config import config
+
+
+def init_kline_data():
+    """启动时初始化K线数据"""
+    symbol = config.get('trade.binance_tradeCoin', 'DOGE') + config.get('trade.binance_coinBase', 'USDT')
+    interval = config.get('trade.kLine_type', '15m')
+    
+    DBManager.get_instance().init_kline_table()
+    
+    kline_service = KlineService()
+    count = kline_service.get_count(symbol, interval)
+    
+    if count < 100:
+        print(f"K线数据不足（{count}条），正在从Binance获取...")
+        kline_service.fetch_and_save(symbol, interval, limit=1000)
+    else:
+        print(f"数据库中已有 {count} 条K线数据")
+
+
+init_kline_data()
 
 orderManager_doge = OrderManager(
     config.get('trade.binance_coinBase', 'USDT'),
