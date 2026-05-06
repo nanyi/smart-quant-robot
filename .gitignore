@@ -46,6 +46,7 @@ brother3.py
 doc/
 migrations/
 AI.txt
+/data/db/
 # ===== IDE / Editor =====
 .idea/
 .vscode/
