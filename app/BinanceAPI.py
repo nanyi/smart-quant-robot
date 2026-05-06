@@ -153,7 +153,7 @@ class BinanceAPI(object):
             params = {"symbol": market, "interval": interval, "startTime": startTime, "endTime": endTime}
 
         if limit is None or limit <= 0 or limit > 1000:
-            limit = 500
+            limit = 1000
 
         params['limit'] = limit
 

@@ -39,7 +39,7 @@ def dingding_notifier(message, isDefaultToken):
     now = datetime.datetime.now()
     ts = now.strftime('%Y-%m-%d %H:%M:%S')
     message = str(ts) + "\n" + message
-    msgDing.dingding_warn(message, isDefaultToken)
+    msgDing.send(message, isDefaultToken)
 
 
 def binance_func():

@@ -219,7 +219,7 @@ class DoubleAverageLines:
                 # print(
                 #     str_date + "\t" + "买入" + code + "\t" + str(round(trade_buy_price, 8)) + "---" + str(isRightTime))
                 if isRightTime:
-                    print("release_trade_stock---buy")
+                    print("交易信号---buy")
                     return "buy," + str(open_time)
 
             else:
@@ -236,10 +236,10 @@ class DoubleAverageLines:
                 # print(str_date + "\t" + "卖出" + str(code) + "\t" + str(round(trade_sell_price, 8)) + "---" + str(
                 #     isRightTime))
                 if isRightTime:
-                    print("release_trade_stock---sell")
+                    print("交易信号---sell")
                     return "sell," + str(open_time)
 
-        print("release_trade_stock---None")
+        print("交易信号---None")
 
         return None
 

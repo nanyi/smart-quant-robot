@@ -398,9 +398,9 @@ class OrderManager(object):
             kline_json = binan.get_klines(symbol, timeInterval, 1000, None, millis_stamp)
             if type(kline_json).__name__ == 'list':
                 return kline_json
+            return None
         except Exception as e:
             print(e)
-        finally:
             return None
 
     # 根据交易规则，格式化交易量
@@ -455,7 +455,7 @@ class OrderManager(object):
             # 获取K线数据
             kline_list = self.gain_kline(self.symbol, config.get('trade.kLine_type', '15m'))
             if kline_list is None:
-                msgInfo = msgInfo + "获取K线数据失败"
+                msgInfo = msgInfo + "服务正常1-获取K线数据失败"
                 print("获取K线数据失败")
                 return
 
