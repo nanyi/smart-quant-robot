@@ -53,6 +53,17 @@ _DEFAULT_CONFIG = {
         'enabled': False,
         'db_path': './data/db/smart_quant_robot.db',
     },
+    'strategy': {
+        'enabled_strategies': ['ma'],
+        'weights': {'ma': 1.0},
+        'threshold': 0.5,
+    },
+    'backtest': {
+        'enabled': True,
+        'initial_capital': 10000.0,
+        'commission_rate': 0.001,
+        'data_limit': 1000,
+    },
 }
 
 
