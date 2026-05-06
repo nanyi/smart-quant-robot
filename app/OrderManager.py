@@ -8,16 +8,38 @@ import math
 import os
 import time
 import traceback
+import pandas as pd
 
 from app.BinanceAPI import BinanceAPI
 from app.notifier import get_notifier
 from runtime_config import config
-from strategy.DoubleAverageLinesStrategy import DoubleAverageLines
+from strategy import CompositeStrategy, MAStrategy
+from strategy.base import SignalType
 
 binan = BinanceAPI()
 notifier = get_notifier()
 
-dALines = DoubleAverageLines()
+
+def create_strategy():
+    """创建策略实例，支持多策略组合"""
+    enabled_strategies = config.get('strategy.enabled_strategies', ['ma'])
+    weights = config.get('strategy.weights', {'ma': 1.0})
+    
+    strategies = []
+    if 'ma' in enabled_strategies:
+        ma_x = config.get('trade.ma_x', 5)
+        ma_y = config.get('trade.ma_y', 60)
+        strategies.append(MAStrategy(ma_x=ma_x, ma_y=ma_y))
+    
+    if len(strategies) == 1:
+        return strategies[0]
+    elif len(strategies) > 1:
+        return CompositeStrategy(strategies, weights)
+    else:
+        return MAStrategy(ma_x=5, ma_y=60)
+
+
+dALines = None
 
 
 class ExchangeRule(object):
@@ -432,7 +454,7 @@ class OrderManager(object):
         这是主要的交易入口函数，按以下步骤执行：
         1. 获取交易所规则
         2. 获取K线数据并转换为DataFrame
-        3. 使用双均线策略判断交易方向
+        3. 使用策略判断交易方向
         4. 根据交易方向执行买入或卖出操作
         5. 如果没有明确信号且开启了卖出策略，则执行分批卖出检查
         6. 发送钉钉通知（异常情况或重要操作）
@@ -460,16 +482,15 @@ class OrderManager(object):
                 return
 
             # k线数据转为 DataFrame格式
-            kline_df = dALines.klinesToDataFrame(kline_list)
+            kline_df = self._klines_to_dataframe(kline_list)
 
-            # 判断交易方向
-            trade_direction = dALines.release_trade_stock(config.get('trade.ma_x', 5), config.get('trade.ma_y', 60), self.symbol, kline_df)
+            # 获取策略并计算信号
+            strategy = create_strategy()
+            signal = strategy.calculate(kline_df)
 
-            if trade_direction is not None:
-
-                if "buy," in trade_direction:
-
-                    isToBuy = self.judgeToBuyCommand(self.orderInfoSavePath, trade_direction)
+            if signal is not None:
+                if signal.signal_type == SignalType.BUY:
+                    isToBuy = self.judgeToBuyCommand(self.orderInfoSavePath, signal.time)
 
                     if isToBuy is False:
                         msgInfo = msgInfo + "服务正常3"
@@ -497,13 +518,13 @@ class OrderManager(object):
 
                         # 存储买入订单信息
                         if res_order_buy is not None and "symbol" in res_order_buy:
-                            res_order_buy["toBuy"] = trade_direction
+                            res_order_buy["toBuy"] = signal.time
                             self.writeOrderInfoWithSellStrategy(self.orderInfoSavePath, res_order_buy)
 
                         order_result_str = self.printOrderJsonInfo(res_order_buy)
                         msgInfo = "购买结果：\n" + order_result_str
 
-                elif "sell," in trade_direction:
+                elif signal.signal_type == SignalType.SELL:
                     dictOrder = self.readOrderInfo(self.orderInfoSavePath)
 
                     if dictOrder is None:
@@ -557,6 +578,26 @@ class OrderManager(object):
                 pass
             else:
                 notifier.send(msgInfo, isDefaultToken)
+
+    def _klines_to_dataframe(self, kline_list):
+        """
+        将K线数据列表转换为DataFrame
+        
+        :param kline_list: K线数据列表
+        :return: DataFrame格式的K线数据
+        """
+        if not kline_list:
+            return pd.DataFrame()
+        
+        columns = ['openTime', 'openPrice', 'highPrice', 'lowPrice', 'closePrice', 
+                   'volume', 'closeTime', 'turnover', 'tradeCount', 'buyVolume', 'buyTurnover']
+        df = pd.DataFrame(kline_list, columns=columns)
+        df['openPrice'] = pd.to_numeric(df['openPrice'], errors='coerce')
+        df['highPrice'] = pd.to_numeric(df['highPrice'], errors='coerce')
+        df['lowPrice'] = pd.to_numeric(df['lowPrice'], errors='coerce')
+        df['closePrice'] = pd.to_numeric(df['closePrice'], errors='coerce')
+        df['volume'] = pd.to_numeric(df['volume'], errors='coerce')
+        return df
 
     def get_spot_asset_by_symbol(self, symbol):
         """
