@@ -70,10 +70,12 @@ def tasklist():
     # 创建一个按分钟间隔执行任务
     schedule.every(20).minutes.do(send_service_info)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-
+    try:
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n服务已停止")
 
 # 调试看报错运行下面，正式运行用上面
 if __name__ == "__main__":
