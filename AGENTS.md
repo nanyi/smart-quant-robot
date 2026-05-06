@@ -328,27 +328,22 @@ trade:
   sellStrategy2: {"profit": 1.10, "sell": 0.2}
   sellStrategy3: {"profit": 1.20, "sell": 0.2}
 
-mysql:
-  enabled: false        # 是否从MySQL加载配置
-  host: "localhost"
-  port: 3306
-  user: "root"
-  password: ""
-  database: "smart_quant"
-  charset: "utf8mb4"
+sqlite:
+  enabled: false        # 是否从SQLite加载配置
+  db_path: "/data/db/smart_quant_robot.db"
 ```
 
 ### 8.2 配置加载优先级
 
-1. **MySQL数据库**（如果 enabled=true 且有数据）> **config.yaml** > **默认值**
+1. **SQLite数据库**（如果 enabled=true 且有数据）> **config.yaml** > **默认值**
 
-### 8.3 MySQL配置存储
+### 8.3 SQLite配置存储
 
-创建 `sql/init_mysql.sql` 初始化脚本，包含 `binance_config` 表：
+创建数据库表 `binance_config`：
 
 ```sql
 CREATE TABLE IF NOT EXISTS `binance_config` (
-  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `api_key` VARCHAR(256) NOT NULL,
   `api_secret` VARCHAR(256) NOT NULL,
   `enabled` TINYINT DEFAULT 1,
