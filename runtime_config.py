@@ -3,7 +3,7 @@ import copy
 import os
 from typing import Any
 
-import pymysql
+import sqlite3
 import yaml
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -49,14 +49,9 @@ _DEFAULT_CONFIG = {
         'sellStrategy2': {'profit': 1.10, 'sell': 0.2},
         'sellStrategy3': {'profit': 1.20, 'sell': 0.2},
     },
-    'mysql': {
+    'sqlite': {
         'enabled': False,
-        'host': 'localhost',
-        'port': 3306,
-        'user': 'root',
-        'password': '',
-        'database': 'smart_quant',
-        'charset': 'utf8mb4',
+        'db_path': './data/db/smart_quant_robot.db',
     },
 }
 
@@ -94,7 +89,7 @@ class Config:
     def __init__(self):
         self._config = copy.deepcopy(_DEFAULT_CONFIG)
         self._load_from_yaml()
-        self._load_from_mysql()
+        self._load_from_sqlite()
 
     @classmethod
     def get_instance(cls):
@@ -118,45 +113,80 @@ class Config:
         except Exception as e:
             print(f'YAML 解析失败，使用默认配置: {e}')
 
-    def _load_from_mysql(self):
-        """从 MySQL 数据库加载 Binance API 配置"""
-        mysql_config = self._config.get('mysql', {})
-        if not mysql_config.get('enabled', False):
-            print('MySQL 配置未启用，跳过从数据库加载')
+    def _load_from_sqlite(self):
+        """从 SQLite 数据库加载 Binance API 配置"""
+        sqlite_config = self._config.get('sqlite', {})
+        if not sqlite_config.get('enabled', False):
+            print('SQLite 配置未启用，跳过从数据库加载')
+            return
+
+        db_path = sqlite_config.get('db_path', './data/db/smart_quant_robot.db')
+        
+        # 确保目录存在
+        db_dir = os.path.dirname(db_path)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+            print(f'创建数据库目录: {db_dir}')
+
+        # 如果数据库文件不存在，先创建
+        if not os.path.exists(db_path):
+            print(f'数据库文件不存在，将创建: {db_path}')
+            self._init_sqlite_db(db_path)
             return
 
         try:
-            connection = pymysql.connect(
-                host=mysql_config.get('host', 'localhost'),
-                port=int(mysql_config.get('port', 3306)),
-                user=mysql_config.get('user', 'root'),
-                password=mysql_config.get('password', ''),
-                database=mysql_config.get('database', 'smart_quant'),
-                charset=mysql_config.get('charset', 'utf8mb4'),
-                connect_timeout=5
-            )
+            connection = sqlite3.connect(db_path, check_same_thread=False)
+            connection.row_factory = sqlite3.Row
             try:
-                with connection.cursor(pymysql.cursors.DictCursor) as cursor:
-                    cursor.execute(
-                        'SELECT api_key, api_secret, dingding_token, dingding_token2 FROM binance_config WHERE enabled = 1 ORDER BY id DESC LIMIT 1'
-                    )
-                    result = cursor.fetchone()
-                    if result:
-                        if result.get('api_key'):
-                            self._config['binance']['api_key'] = result['api_key']
-                            self._config['binance']['api_secret'] = result['api_secret']
-                            print('已从 MySQL 加载 Binance API 配置')
-                        if result.get('dingding_token') is not None:
-                            self._config['dingding']['token'] = result['dingding_token']
-                            print('已从 MySQL 加载钉钉配置')
-                        if result.get('dingding_token2') is not None:
-                            self._config['dingding']['token2'] = result['dingding_token2']
-                    else:
-                        print('MySQL 中没有启用的 Binance 配置，使用 YAML 或默认配置')
+                cursor = connection.cursor()
+                cursor.execute(
+                    'SELECT api_key, api_secret, dingding_token, dingding_token2 FROM binance_config WHERE enabled = 1 ORDER BY id DESC LIMIT 1'
+                )
+                result = cursor.fetchone()
+                if result:
+                    if result['api_key']:
+                        self._config['binance']['api_key'] = result['api_key']
+                        self._config['binance']['api_secret'] = result['api_secret']
+                        print('已从 SQLite 加载 Binance API 配置')
+                    if result['dingding_token'] is not None:
+                        self._config['dingding']['token'] = result['dingding_token']
+                        print('已从 SQLite 加载钉钉配置')
+                    if result['dingding_token2'] is not None:
+                        self._config['dingding']['token2'] = result['dingding_token2']
+                else:
+                    print('SQLite 中没有启用的 Binance 配置，使用 YAML 或默认配置')
             finally:
                 connection.close()
         except Exception as e:
-            print(f'MySQL 连接失败，使用 YAML 或默认配置: {e}')
+            print(f'SQLite 连接失败，使用 YAML 或默认配置: {e}')
+
+    def _init_sqlite_db(self, db_path):
+        """初始化 SQLite 数据库"""
+        try:
+            connection = sqlite3.connect(db_path, check_same_thread=False)
+            connection.row_factory = sqlite3.Row
+            try:
+                cursor = connection.cursor()
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS binance_config (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        api_key VARCHAR(256) NOT NULL,
+                        api_secret VARCHAR(256) NOT NULL,
+                        dingding_token VARCHAR(256) DEFAULT '',
+                        dingding_token2 VARCHAR(256) DEFAULT '',
+                        enabled INTEGER DEFAULT 1,
+                        update_time DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                cursor.execute(
+                    "INSERT OR IGNORE INTO binance_config (id, api_key, api_secret, dingding_token, dingding_token2, enabled) VALUES (1, '', '', '', '', 1)"
+                )
+                connection.commit()
+                print(f'SQLite 数据库初始化完成: {db_path}')
+            finally:
+                connection.close()
+        except Exception as e:
+            print(f'SQLite 数据库初始化失败: {e}')
 
     def _save_yaml(self, data: dict):
         """保存配置到 YAML 文件"""
