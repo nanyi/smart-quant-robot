@@ -22,14 +22,35 @@ notifier = get_notifier()
 
 def create_strategy():
     """创建策略实例，支持多策略组合"""
+    from strategy import (
+        MAStrategy, CompositeStrategy, VolatilityStrategy,
+        VolumeStrategy, RSIStrategy, BollingerStrategy, MACDStrategy
+    )
+    
     enabled_strategies = config.get('strategy.enabled_strategies', ['ma'])
     weights = config.get('strategy.weights', {'ma': 1.0})
     
     strategies = []
+    
     if 'ma' in enabled_strategies:
         ma_x = config.get('trade.ma_x', 5)
         ma_y = config.get('trade.ma_y', 60)
         strategies.append(MAStrategy(ma_x=ma_x, ma_y=ma_y))
+    
+    if 'volatility' in enabled_strategies:
+        strategies.append(VolatilityStrategy())
+    
+    if 'volume' in enabled_strategies:
+        strategies.append(VolumeStrategy())
+    
+    if 'rsi' in enabled_strategies:
+        strategies.append(RSIStrategy())
+    
+    if 'bollinger' in enabled_strategies:
+        strategies.append(BollingerStrategy())
+    
+    if 'macd' in enabled_strategies:
+        strategies.append(MACDStrategy())
     
     if len(strategies) == 1:
         return strategies[0]

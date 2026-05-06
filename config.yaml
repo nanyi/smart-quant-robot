@@ -49,8 +49,18 @@ sqlite:
 strategy:
   enabled_strategies:
     - "ma"
+    - "rsi"
+    - "bollinger"
+    - "macd"
+    - "volatility"
+    - "volume"
   weights:
     ma: 1.0
+    rsi: 0.8
+    bollinger: 0.8
+    macd: 0.8
+    volatility: 0.7
+    volume: 0.7
   threshold: 0.5
 
 backtest:
