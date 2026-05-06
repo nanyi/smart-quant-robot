@@ -4,9 +4,9 @@
 如果国内不能访问币安api，需要科学上网。
 
 ## 简介
-这是一个数字货币量化交易系统，使用的Binance币安的交易API。
+这是一个数字货币量化交易系统，使用Binance币安的交易API。
 
-本系统采用双均线交易策略，两条均线出现金叉则买入，出现死叉则卖出。
+本系统支持**多策略动态加权合成**，默认采用双均线策略，两条均线出现金叉则买入，出现死叉则卖出。
 
 [币安账号注册页面](https://www.bsmkweb.cc/referral/earn-together/refer2earn-usdc/claim?hl=zh-CN&ref=GRO_28502_EM5R3&utm_source=referral_entrance&utm_medium=web_share_copy)（通过链接注册，享受交易返现优惠政策）
 
@@ -17,6 +17,55 @@
 这世上，没有百分百赚钱的方式，量化交易策略只是一个辅助工具。
 
 币圈有风险，入市需谨慎！！
+
+
+## 系统架构
+
+```
+smart-quant-robot/
+├── app/
+│   ├── BinanceAPI.py       # 币安API封装
+│   ├── OrderManager.py     # 订单管理器
+│   ├── notifier.py         # 钉钉通知
+│   └── services/
+│       └── kline_service.py # K线服务层
+├── strategy/
+│   ├── base.py             # 策略基类
+│   ├── ma.py               # 双均线策略
+│   ├── composite.py        # 策略组合器
+│   ├── volatility.py       # 波动率突破策略
+│   ├── volume.py           # 成交量验证策略
+│   ├── rsi.py             # RSI策略
+│   ├── bollinger.py       # 布林带策略
+│   └── macd.py            # MACD策略
+├── backtest/
+│   ├── models.py           # 回测数据模型
+│   ├── engine.py           # 回测引擎
+│   └── reporter.py         # 回测报告生成器
+├── db/
+│   ├── manager.py         # 数据库管理器
+│   ├── kline_repo.py      # K线数据仓库
+│   └── kline_data.py      # K线数据模型
+├── scripts/
+│   └── load_kline.py      # K线数据加载脚本
+├── runtime_config.py       # 运行时配置
+├── config.yaml            # 配置文件
+└── main.py                # 程序入口
+```
+
+
+## 支持的策略
+
+| 策略 | 说明 | 默认权重 |
+|------|------|----------|
+| MA | 双均线策略 | 1.0 |
+| RSI | 相对强弱指数策略 | 0.8 |
+| Bollinger | 布林带策略 | 0.8 |
+| MACD | 指数平滑异同移动平均线 | 0.8 |
+| Volatility | 波动率突破策略 | 0.7 |
+| Volume | 成交量验证策略 | 0.7 |
+
+策略采用动态加权合成，综合得分 > 阈值(0.5) 时产生交易信号。
 
 
 ## 双均线策略
@@ -39,92 +88,156 @@
 
 [币安账号注册页面](https://www.bsmkweb.cc/referral/earn-together/refer2earn-usdc/claim?hl=zh-CN&ref=GRO_28502_EM5R3&utm_source=referral_entrance&utm_medium=web_share_copy)（通过链接注册，享受交易返现优惠政策）
 
-## 运行环境
-
-python3.7
-
-由于交易所的api在大陆无法访问，需要科学上网，若无，可用[泰山]
-
-泰山邀请码：OxCJV3VZ
-
-最新地址1：[https://hk.taishan.pro](https://hk.taishan.pro/#/register?code=OxCJV3VZ)
-
-最新地址2：[https://jp.taishan.pro](https://jp.taishan.pro/#/register?code=OxCJV3VZ)
-
-最新地址3：[https://ru.taishan.pro](https://ru.taishan.pro/#/register?code=OxCJV3VZ)
-
 
 ## 快速使用
 
-1、获取币安API的 api_key 和 api_secret
+### 1、环境配置
+
+```
+python3.7+
+pip install -r requirements.txt
+```
+
+### 2、获取币安API的 api_key 和 api_secret
 
 申请api_key地址:
 
 [币安API管理页面](https://www.binance.com/cn/usercenter/settings/api-management)
 
 
-2、注册钉钉自定义机器人Webhook，用于推送交易信息到指定的钉钉群
+### 3、注册钉钉自定义机器人Webhook
 
 [钉钉自定义机器人注册方法](https://m.dingtalk.com/qidian/help-detail-20781541)
 
-3、修改app目录下的authorization文件
+### 4、修改配置文件 config.yaml
 
-```
-api_key='币安key'
-api_secret='币安secret'
-dingding_token = '申请钉钉群助手的token'   # 强烈建议使用
-```
+```yaml
+binance:
+  api_key: '币安key'
+  api_secret: '币安secret'
 
-4、交易策略配置信息 runtime_config.py
+dingding:
+  enabled: true
+  token: '钉钉群机器人token'
 
-设置配置信息：
+strategy:
+  enabled_strategies:
+    - "ma"         # 启用双均线策略
+    - "rsi"        # 可添加更多策略
+  weights:
+    ma: 1.0
+    rsi: 0.8
+  threshold: 0.5
 
-```
-# 均线, ma_x 要大于 ma_y
-ma_x = 5
-ma_y = 60
-
-# 币安
-binance_market = "SPOT"#现货市场
-kLine_type = '15m' # 15分钟k线类型，可以设置为5分钟K线：5m;1小时为：1h;1天为：1d
-```
-当 kline 5 向上穿过 kline 60， 则执行买入。
-
-当 kline 5 向下穿过 kline 60， 则执行卖出。
-
-可根据自己的喜好，调整 ma_x 和 ma_y 的值。 
-
-也可以调整 kLine_type ，来选择 5分钟K线、15分钟K线、30分钟K线、1小时K线、1天K线等；
-
-不同的K线，最终效果也是不一样的。
-
-5、同时交易多币种
-
-在main.py中
-
-创建多个订单管理对象：
-```
-# 使用 USDT 购买 DOGE,限定最多100个USDT
-orderManager_doge = OrderManager("USDT", 100,"DOGE", binance_market)
-# 使用 USDT 购买 ETH,限定最多100个USDT
-orderManager_eth = OrderManager("USDT", 100,"ETH", binance_market)
+trade:
+  ma_x: 5          # 短期均线
+  ma_y: 60         # 长期均线
+  kLine_type: '15m' # K线周期
+  binance_tradeCoin: "DOGE"
 ```
 
-将orderManager_doge 和 orderManager_eth 加入定时执行的方法中：
-```
-def binance_func():
-    orderManager_doge.binance_func()
-    time.sleep(10)
-    orderManager_eth.binance_func()
+### 5、加载K线数据
 
+```bash
+# 加载最新1000条K线
+python scripts/load_kline.py --symbol DOGEUSDT --interval 15m --limit 1000
+
+# 加载最近30天K线
+python scripts/load_kline.py --symbol DOGEUSDT --interval 15m --days 30
 ```
 
-程序可同时监控 DOGE 和 ETH 的均线，并根据策略执行交易。
-使用时，可根据自身需要，增加其他币种。
+### 6、运行程序
 
-6、运行程序(记得先开科学上网)
-```
+```bash
 python main.py
+```
+
+
+## 回测系统
+
+### 基本使用
+
+```python
+from backtest import BacktestEngine, BacktestReporter, MAStrategy
+from db.kline_data import KlineData
+
+# 准备K线数据
+klines = [...]  # KlineData列表，或从数据库加载
+
+# 创建回测引擎
+engine = BacktestEngine(initial_capital=10000.0, commission_rate=0.001)
+
+# 创建策略
+strategy = MAStrategy(ma_x=5, ma_y=60)
+
+# 运行回测
+stats = engine.run_with_data(strategy, df, symbol='DOGEUSDT')
+
+# 生成报告
+reporter = BacktestReporter(stats, engine.get_orders(), engine.get_trades())
+print(reporter.generate_text_report())
+```
+
+### 回测报告示例
+
+```
+============================================================
+回测报告
+============================================================
+
+【账户信息】
+  初始资金: 10000.00 USDT
+  最终资金: 11500.00 USDT
+  总收益: 1500.00 USDT
+  收益率: 15.00%
+
+【交易统计】
+  总交易次数: 10
+  盈利交易次数: 6
+  亏损交易次数: 4
+  胜率: 60.00%
+
+【收益统计】
+  总盈利: 2000.00 USDT
+  总亏损: 500.00 USDT
+  盈利因子: 4.00
+
+【风险统计】
+  最大回撤: 500.00 USDT
+  最大回撤率: 5.00%
+  夏普比率: 1.50
+```
+
+### 从数据库加载数据运行回测
+
+```python
+from backtest import BacktestEngine, BacktestReporter, CompositeStrategy, MAStrategy, RSIStrategy
+from app.services import KlineService
+from db.kline_data import KlineData
+
+# 创建K线服务
+kline_service = KlineService()
+
+# 从数据库加载K线数据
+klines = kline_service.get_from_db('DOGEUSDT', '15m', limit=1000)
+
+# 转换为DataFrame
+df = KlineData.to_dataframe(klines)
+
+# 创建策略组合
+strategies = [MAStrategy(ma_x=5, ma_y=60), RSIStrategy(period=14)]
+composite = CompositeStrategy(strategies, weights={'ma': 1.0, 'rsi': 0.8})
+
+# 创建回测引擎
+engine = BacktestEngine(initial_capital=10000.0)
+
+# 运行回测
+stats = engine.run_with_data(composite, df, symbol='DOGEUSDT')
+
+# 生成JSON格式报告
+reporter = BacktestReporter(stats, engine.get_orders(), engine.get_trades())
+report_json = reporter.generate_json_report()
+print(report_json)
 ```
 
 
@@ -137,4 +250,3 @@ Linux, 1核CPU, 2G内存(1G也可)
 可以在阿里云上购买的日本东京服务器(传说币安服务器就在东京)
 
 也可选择 新加坡、香港服务器
-

@@ -495,12 +495,12 @@ class OrderManager(object):
             # 记录执行时间
             now = datetime.datetime.now()
             ts = now.strftime('%Y-%m-%d %H:%M:%S')
-            print('执行开始时间：', ts)
+            print('执行开始时间：%s' % ts)
             msgInfo = msgInfo + str(ts) + "\n"
 
             # 获取K线数据
             interval = config.get('trade.kLine_type', '15m')
-            kline_df = self.kline_service.get_kline_dataframe(self.symbol, interval, limit=1000)
+            kline_df = self.kline_service.get_kline_dataframe_from_api(self.symbol, interval, limit=1000)
 
             if kline_df is None or kline_df.empty:
                 msgInfo = msgInfo + "服务正常1-获取K线数据失败"
@@ -536,8 +536,7 @@ class OrderManager(object):
                         quantity = self.format_trade_quantity(coin_base_count / float(cur_price))
                         # 购买
                         res_order_buy = binan.buy_limit(self.symbol, quantity, cur_price)
-                        print("购买结果：")
-                        print(res_order_buy)
+                        print("购买结果：" + str(res_order_buy))
 
                         # 存储买入订单信息
                         if res_order_buy is not None and "symbol" in res_order_buy:
@@ -556,8 +555,7 @@ class OrderManager(object):
                     else:
 
                         asset_coin = binan.get_spot_asset_by_symbol(self.trade_coin)
-                        print(self.trade_coin + " 资产：")
-                        print(asset_coin)
+                        print(self.trade_coin + " 资产：" + str(asset_coin))
 
                         quantity = self.format_trade_quantity(float(asset_coin["free"]))
 

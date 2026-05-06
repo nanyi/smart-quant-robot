@@ -55,6 +55,19 @@ class KlineData:
         :param interval: K线周期
         :return: KlineData实例
         """
+
+        # if not kline_list:
+        #      return pd.DataFrame()
+        #
+        #  columns = ['openTime', 'openPrice', 'highPrice', 'lowPrice', 'closePrice',
+        #             'volume', 'closeTime', 'turnover', 'tradeCount', 'buyVolume', 'buyTurnover', 'ignore']
+        #  df = pd.DataFrame(kline_list, columns=columns)
+        #  df['openPrice'] = pd.to_numeric(df['openPrice'], errors='coerce')
+        #  df['highPrice'] = pd.to_numeric(df['highPrice'], errors='coerce')
+        #  df['lowPrice'] = pd.to_numeric(df['lowPrice'], errors='coerce')
+        #  df['closePrice'] = pd.to_numeric(df['closePrice'], errors='coerce')
+        #  df['volume'] = pd.to_numeric(df['volume'], errors='coerce')
+
         return cls(
             symbol=symbol,
             interval=interval,

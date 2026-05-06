@@ -8,7 +8,7 @@ K线数据批量加载脚本
 用法：
     python scripts/load_kline.py --symbol DOGEUSDT --interval 15m --limit 1000
     python scripts/load_kline.py --symbol BTCUSDT --interval 1h --days 30
-    python scripts/load_kline.py --symbol ETHUSDT --interval 1d --start 2024010100000 --end 2024060100000
+    python scripts/load_kline.py --symbol ETHUSDT --interval 1d --start 1767196800000 --end 1777564800000
 """
 import argparse
 import time
@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 
 from app.services import KlineService
 from db.manager import DBManager
-from runtime_config import config
 
 
 def parse_args():
@@ -57,7 +56,7 @@ def main():
     
     print(f"=" * 50)
     print(f"加载完成，共存储 {count} 条K线数据")
-    print(f=" * 50)
+    print(f"=" * 50)
 
 
 if __name__ == '__main__':

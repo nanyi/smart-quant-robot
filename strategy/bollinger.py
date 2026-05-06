@@ -30,7 +30,8 @@ class BollingerStrategy(SignalStrategy):
             return None
         
         df = df.copy()
-        df['openTime'] = pd.to_datetime(df['openTime'])
+        df['openTime'] = pd.to_datetime(df['openTime'], unit='ms')
+        df['closeTime'] = pd.to_datetime(df['closeTime'], unit='ms')
         df = df.sort_values('openTime', ascending=True)
         
         df['MA'] = df['closePrice'].rolling(self.period).mean()

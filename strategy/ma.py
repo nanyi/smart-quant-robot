@@ -26,7 +26,8 @@ class MAStrategy(SignalStrategy):
             return None
         
         df = df.copy()
-        df['openTime'] = pd.to_datetime(df['openTime'])
+        df['openTime'] = pd.to_datetime(df['openTime'], unit='ms')
+        df['closeTime'] = pd.to_datetime(df['closeTime'], unit='ms')
         df = df.sort_values('openTime', ascending=True)
         
         maX = df['closePrice'].rolling(self.ma_x).mean()
@@ -68,6 +69,6 @@ class MAStrategy(SignalStrategy):
     def _is_valid_time(self, openTime: str, closeTime: str) -> bool:
         dt_interval = pd.to_datetime(closeTime) - pd.to_datetime(openTime)
         seconds = dt_interval.seconds
-        now = int(round((time_module.time() - seconds) * 1000))
+        now = int(round((time_module.mktime(time_module.gmtime()) - seconds) * 1000))
         now_str = time_module.strftime('%Y-%m-%d %H:%M:%S', time_module.localtime(now / 1000))
         return now_str >= openTime and now_str <= closeTime

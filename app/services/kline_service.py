@@ -130,6 +130,42 @@ class KlineService:
             return KlineData.to_dataframe([])
         return KlineData.to_dataframe(klines)
 
+    def get_latest_kline_dataframe(self, symbol: str, interval: str):
+        """获取最新一条K线并转换为DataFrame
+
+        :param symbol: 交易对符号
+        :param interval: K线周期
+        :return: DataFrame格式的K线数据
+        """
+        kline = self.get_latest(symbol, interval)
+        if not kline:
+            return KlineData.to_dataframe([])
+        return KlineData.to_dataframe([kline])
+
+    def get_kline_dataframe_from_api(
+        self,
+        symbol: str,
+        interval: str,
+        limit: int = 1000,
+    ):
+        """从Binance获取K线保存到数据库后，从数据库中获取limit条数据转换为DataFrame
+
+        :param symbol: 交易对符号
+        :param interval: K线周期
+        :param limit: 获取数量，默认1000
+        :return: DataFrame格式的K线数据
+        """
+        k_last = self.get_latest(symbol, interval)
+        if k_last:
+            start_time = k_last.open_time
+            end_time = int(round(time.time() * 1000))
+            self.fetch_all_historical(symbol, interval, start_time, end_time)
+        else:
+            self.fetch_and_save(symbol, interval, limit)
+
+        return self.get_kline_dataframe(symbol, interval, limit)
+
+
     def get_count(self, symbol: str = None, interval: str = None) -> int:
         """获取K线数量
         
