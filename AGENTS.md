@@ -362,7 +362,7 @@ from runtime_config import config
 
 # 获取配置
 api_key = config.get('binance.api_key')
-ma_config = config.get('trade.strategy.ma')
+ma_config = config.get('strategy.ma')
 short_period = ma_config.get('short_period', 5)  # 带默认值
 
 # 设置配置

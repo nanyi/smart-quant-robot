@@ -24,10 +24,6 @@ binance:
     port: 7890
 
 trade:
-  strategy:
-    ma:
-      short_period: 5
-      long_period: 60
   kLine_type: '15m'
   binance_market: "SPOT"
   binance_coinBase: "USDT"
@@ -68,6 +64,9 @@ strategy:
     lifemore: 1.0
     turtle: 1.0
   threshold: 0.5
+  ma:
+    short_period: 5
+    long_period: 60
   lifemore:
     breakout_period: 30
     pyramid_ratio: 0.05

@@ -34,7 +34,7 @@ def create_strategy():
     strategies = []
     
     if 'ma' in enabled_strategies:
-        ma_config = config.get('trade.strategy.ma')
+        ma_config = config.get('strategy.ma')
         short_period = ma_config.get('short_period', 5)
         long_period = ma_config.get('long_period', 60)
         strategies.append(MAStrategy(short_period=short_period, long_period=long_period))

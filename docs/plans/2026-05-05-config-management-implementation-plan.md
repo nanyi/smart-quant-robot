@@ -364,8 +364,8 @@ from runtime_config import config
 - `sellStrategy1` → `config.get('trade.sellStrategy1')`
 - `sellStrategy2` → `config.get('trade.sellStrategy2')`
 - `sellStrategy3` → `config.get('trade.sellStrategy3')`
-- `short_period` → `config.get('trade.strategy.ma.short_period', 5)`
-- `long_period` → `config.get('trade.strategy.ma.long_period', 60)`
+- `short_period` → `config.get('strategy.ma.short_period', 5)`
+- `long_period` → `config.get('strategy.ma.long_period', 60)`
 - `isOpenSellStrategy` → `config.get('trade.isOpenSellStrategy', False)`
 - `kLine_type` → `config.get('trade.kLine_type', '15m')`
 

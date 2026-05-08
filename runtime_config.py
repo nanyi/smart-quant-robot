@@ -37,12 +37,6 @@ _DEFAULT_CONFIG = {
         'to_user': '@all',
     },
     'trade': {
-        'strategy': {
-            'ma': {
-                'short_period': 5,
-                'long_period': 60
-            }
-        },
         'kLine_type': '15m',
         'binance_market': 'SPOT',
         'binance_coinBase': 'USDT',
@@ -59,8 +53,34 @@ _DEFAULT_CONFIG = {
     },
     'strategy': {
         'enabled_strategies': ['ma'],
-        'weights': {'ma': 1.0},
+        'weights': {
+            'ma': 1.0,
+            'rsi': 0.8,
+            'bollinger': 0.8,
+            'macd': 0.8,
+            'volatility': 0.7,
+            'volume': 0.7,
+            'lifemore': 1.0,
+            'turtle': 1.0
+        },
         'threshold': 0.5,
+        'ma': {
+            'short_period': 5,
+            'long_period': 60
+        },
+        'lifemore': {
+            'breakout_period': 30,
+            'pyramid_ratio': 0.05,
+            'stop_loss_ratio': 0.10,
+            'exit_ratio': 0.20
+        },
+        'turtle': {
+            'entry_period': 20,
+            'exit_period': 10,
+            'atr_period': 20,
+            'risk_ratio': 0.02,
+            'max_units': 4
+        }
     },
     'backtest': {
         'enabled': True,
@@ -244,14 +264,12 @@ class Config:
 config = Config.get_instance()
 
 if __name__ == '__main__':
-    trade_config = config.get('trade')
-    print(trade_config)
-    strategy_config = trade_config.get('strategy')
+    strategy_config = config.get('strategy')
     print(strategy_config)
     ma_config = strategy_config.get('ma')
     print(ma_config)
     print(ma_config.get('short_period'))
-    print(config.get('trade.strategy.ma.short_period'))
+    print(config.get('strategy.ma.short_period'))
     ma_config.set('ssss', 22)
-    print(config.get('trade.strategy.ma.ssss'))
+    print(config.get('strategy.ma.ssss'))
     print(ma_config.get('ssss'))
