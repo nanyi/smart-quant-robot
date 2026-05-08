@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from typing import List, Dict, Optional
+import os
+import re
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 import json
 
@@ -198,3 +200,53 @@ class BacktestReporter:
 
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
+
+    @staticmethod
+    def _generate_unique_filename(base_path: str) -> str:
+        if not os.path.exists(base_path):
+            return base_path
+
+        directory = os.path.dirname(base_path)
+        filename = os.path.basename(base_path)
+        name, ext = os.path.splitext(filename)
+
+        match = re.match(r'^(.+)\((\d+)\)$', name)
+        if match:
+            base_name = match.group(1)
+            num = int(match.group(2))
+        else:
+            base_name = name
+            num = 0
+
+        while True:
+            num += 1
+            new_filename = f"{base_name}({num}){ext}"
+            new_path = os.path.join(directory, new_filename) if directory else new_filename
+            if not os.path.exists(new_path):
+                return new_path
+
+    @staticmethod
+    def save_backtest_report(df, strategy, engine, stats, output_dir="./backtest/report"):
+        import pandas as pd
+
+        os.makedirs(output_dir, exist_ok=True)
+
+        reporter = BacktestReporter(stats, engine.get_orders(), engine.get_trades())
+        report_text = reporter.generate_text_report()
+        with open(BacktestReporter._generate_unique_filename(os.path.join(output_dir, "backtest_report.txt")), "w", encoding="utf-8") as f:
+            f.write(report_text)
+
+        df.to_excel(BacktestReporter._generate_unique_filename(os.path.join(output_dir, "backtest_data.xlsx")), index=False)
+
+        orders_df = pd.DataFrame([order.to_dataFrame() for order in engine.get_orders()])
+        if not orders_df.empty:
+            orders_df.to_excel(BacktestReporter._generate_unique_filename(os.path.join(output_dir, "backtest_orders.xlsx")), index=False)
+
+        trades_df = pd.DataFrame([trade.to_dataFrame() for trade in engine.get_trades()])
+        if not trades_df.empty:
+            trades_df.to_excel(BacktestReporter._generate_unique_filename(os.path.join(output_dir, "backtest_trades.xlsx")), index=False)
+
+        positions_dict = engine.get_positions()
+        if positions_dict:
+            positions_df = pd.DataFrame([pos.to_dataFrame() for pos in positions_dict.values()])
+            positions_df.to_excel(BacktestReporter._generate_unique_filename(os.path.join(output_dir, "backtest_positions.xlsx")), index=False)
