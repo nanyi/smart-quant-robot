@@ -15,7 +15,8 @@ from backtest.models import (
     PositionSide,
 )
 from strategy.base import Signal, SignalType
-from db.kline_repo import KlineRepo, KlineData
+from db.kline_repo import KlineRepo
+from db.kline_data import KlineData
 
 
 class BacktestEngine:
@@ -98,13 +99,14 @@ class BacktestEngine:
 
     def run_with_data(self, strategy, df: pd.DataFrame, symbol: str) -> BacktestStats:
         for idx in range(len(df)):
-            current_bar = df.iloc[idx]
-            current_price = current_bar["close"]
-            current_time = current_bar["open_time"]
+            current_bar = df.iloc[idx] # K线
+            current_price = current_bar["closePrice"] # 当前价格
+            current_time = current_bar["openTime"] # 当前时间
 
+            # 检查订单
             self._check_and_fill_orders(current_price, current_time)
 
-            signal = strategy.calculate(df, idx)
+            signal = strategy.calculate(df[:idx + 1], idx)
             if signal and signal.signal_type == SignalType.BUY:
                 self._execute_buy(symbol, current_price, current_time, signal.weight)
             elif signal and signal.signal_type == SignalType.SELL:
@@ -128,7 +130,7 @@ class BacktestEngine:
     def _fill_order(self, order: BacktestOrder, fill_price: float, fill_time: datetime):
         order.filled_quantity = order.quantity
         order.status = OrderStatus.FILLED
-        order.update_time = fill_time
+        order.update_time = pd.to_datetime(fill_time, unit="ms")
 
         commission = fill_price * order.quantity * self.commission_rate
 
@@ -156,7 +158,7 @@ class BacktestEngine:
             quantity=order.quantity,
             turnover=fill_price * order.quantity,
             commission=commission,
-            trade_time=fill_time,
+            trade_time=pd.to_datetime(fill_time, unit="ms"),
         )
         self.trades.append(trade)
 
@@ -213,7 +215,17 @@ class BacktestEngine:
 
         for trade in self.trades:
             if trade.side == OrderSide.SELL:
-                pnl = trade.price * trade.quantity - trade.commission
+                sell_revenue = trade.price * trade.quantity
+                
+                buy_cost = 0.0
+                for prev_trade in self.trades:
+                    if (prev_trade.symbol == trade.symbol and 
+                        prev_trade.side == OrderSide.BUY and
+                        prev_trade.trade_time <= trade.trade_time):
+                        buy_cost += prev_trade.price * prev_trade.quantity
+                
+                pnl = sell_revenue - buy_cost - trade.commission
+                
                 if pnl > 0:
                     total_profit += pnl
                     self.stats.winning_trades += 1

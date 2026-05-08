@@ -19,10 +19,10 @@ class CompositeStrategy(SignalStrategy):
     def weight(self) -> float:
         return 1.0
     
-    def calculate(self, df) -> Optional[Signal]:
+    def calculate(self, df, idx: int = -1) -> Optional[Signal]:
         signals = []
         for strategy in self.strategies:
-            signal = strategy.calculate(df)
+            signal = strategy.calculate(df, idx)
             if signal:
                 signals.append(signal)
         

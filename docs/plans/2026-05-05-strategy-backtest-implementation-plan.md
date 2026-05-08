@@ -84,31 +84,31 @@ from strategy.base import SignalStrategy, Signal, SignalType
 class MAStrategy(SignalStrategy):
     """双均线策略"""
     
-    def __init__(self, ma_x: int = 5, ma_y: int = 60):
-        self.ma_x = ma_x
-        self.ma_y = ma_y
+    def __init__(self, short_period: int = 5, long_period: int = 60):
+        self.short_period = short_period
+        self.long_period = long_period
     
     @property
     def name(self) -> str:
-        return f"MA_{self.ma_x}_{self.ma_y}"
+        return f"MA_{self.short_period}_{self.long_period}"
     
     @property
     def weight(self) -> float:
         return 1.0
     
     def calculate(self, df) -> Optional[Signal]:
-        if df is None or len(df) < self.ma_y:
+        if df is None or len(df) < self.long_period:
             return None
         
         df = df.copy()
         df['openTime'] = pd.to_datetime(df['openTime'])
         df = df.sort_values('openTime', ascending=True)
         
-        maX = df['closePrice'].rolling(self.ma_x).mean()
-        maY = df['closePrice'].rolling(self.ma_y).mean()
+        ma_short = df['closePrice'].rolling(self.short_period).mean()
+        ma_long = df['closePrice'].rolling(self.long_period).mean()
         
-        s1 = maX < maY
-        s2 = maX > maY
+        s1 = ma_short < ma_long
+        s2 = ma_short > ma_long
         
         death_ex = s1 & s2.shift(1)
         golden_ex = ~(s1 | s2.shift(1))
@@ -640,7 +640,7 @@ git commit -m "feat(backtest): 添加回测报告生成器"
         'enabled': True,
         'weights': {'ma': 0.5, 'volatility': 0.3, 'volume': 0.2}
     },
-    'ma': {'ma_x': 5, 'ma_y': 60},
+    'ma': {'short_period': 5, 'long_period': 60},
     'volatility': {'period': 20, 'multiplier': 2},
     'volume': {'threshold': 1.5}
 },
@@ -658,8 +658,8 @@ strategy:
     weights:
       ma: 0.5
   ma:
-    ma_x: 5
-    ma_y: 60
+    short_period: 5
+    long_period: 60
 
 backtest:
   initial_capital: 10000
@@ -692,8 +692,8 @@ from db.kline_repo import KlineRepo
 ```python
 # 使用双均线策略
 ma_strategy = MAStrategy(
-    ma_x=config.get('strategy.ma.ma_x', 5),
-    ma_y=config.get('strategy.ma.ma_y', 60)
+    short_period=config.get('strategy.ma.short_period', 5),
+    long_period=config.get('strategy.ma.long_period', 60)
 )
 signal = ma_strategy.calculate(kline_df)
 ```

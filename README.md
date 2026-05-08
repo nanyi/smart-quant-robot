@@ -130,8 +130,10 @@ strategy:
   threshold: 0.5
 
 trade:
-  ma_x: 5          # 短期均线
-  ma_y: 60         # 长期均线
+  strategy:
+    ma:
+      short_period: 5          # 短期均线
+      long_period: 60         # 长期均线
   kLine_type: '15m' # K线周期
   binance_tradeCoin: "DOGE"
 ```
@@ -158,7 +160,8 @@ python main.py
 ### 基本使用
 
 ```python
-from backtest import BacktestEngine, BacktestReporter, MAStrategy
+from backtest import BacktestEngine, BacktestReporter
+from strategy import MAStrategy
 from db.kline_data import KlineData
 
 # 准备K线数据
@@ -168,7 +171,7 @@ klines = [...]  # KlineData列表，或从数据库加载
 engine = BacktestEngine(initial_capital=10000.0, commission_rate=0.001)
 
 # 创建策略
-strategy = MAStrategy(ma_x=5, ma_y=60)
+strategy = MAStrategy(short_period=5, long_period=60)
 
 # 运行回测
 stats = engine.run_with_data(strategy, df, symbol='DOGEUSDT')
@@ -211,7 +214,8 @@ print(reporter.generate_text_report())
 ### 从数据库加载数据运行回测
 
 ```python
-from backtest import BacktestEngine, BacktestReporter, CompositeStrategy, MAStrategy, RSIStrategy
+from backtest import BacktestEngine, BacktestReporter
+from strategy import CompositeStrategy, MAStrategy, RSIStrategy
 from app.services import KlineService
 from db.kline_data import KlineData
 
@@ -225,7 +229,7 @@ klines = kline_service.get_from_db('DOGEUSDT', '15m', limit=1000)
 df = KlineData.to_dataframe(klines)
 
 # 创建策略组合
-strategies = [MAStrategy(ma_x=5, ma_y=60), RSIStrategy(period=14)]
+strategies = [MAStrategy(short_period=5, long_period=60), RSIStrategy(period=14)]
 composite = CompositeStrategy(strategies, weights={'ma': 1.0, 'rsi': 0.8})
 
 # 创建回测引擎

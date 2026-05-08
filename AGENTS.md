@@ -188,9 +188,9 @@ from app.authorization import api_key, api_secret
 所有策略参数集中在 `runtime_config.py` 中：
 
 ```python
-# 均线配置，ma_x 必须大于 ma_y
-ma_x = 5   # 短周期均线
-ma_y = 60  # 长周期均线
+# 均线配置，short_period 必须大于 long_period
+short_period = 5   # 短周期均线
+long_period = 60  # 长周期均线
 
 # K线周期
 kLine_type = '15m'  # 支持: 5m, 15m, 30m, 1h, 1d 等
@@ -316,8 +316,10 @@ weixin:
   to_user: "@all"
 
 trade:
-  ma_x: 5               # 短周期均线
-  ma_y: 60              # 长周期均线
+  strategy:
+    ma:
+      short_period: 5               # 短周期均线
+      long_period: 60              # 长周期均线
   kLine_type: '15m'     # K线周期
   binance_market: "SPOT"
   binance_coinBase: "USDT"
@@ -360,10 +362,11 @@ from runtime_config import config
 
 # 获取配置
 api_key = config.get('binance.api_key')
-ma_x = config.get('trade.ma_x', 5)  # 带默认值
+ma_config = config.get('trade.strategy.ma')
+short_period = ma_config.get('short_period', 5)  # 带默认值
 
 # 设置配置
-config.set('trade.ma_x', 10)
+ma_config.set('short_period', 10)
 ```
 
 ### 8.5 禁止硬编码

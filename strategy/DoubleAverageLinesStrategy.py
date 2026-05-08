@@ -124,7 +124,7 @@ class DoubleAverageLines:
 
         return None
 
-    def release_trade_stock(self, ma_x_line, ma_y_line, code, df):
+    def release_trade_stock(self, short_period_line, long_period_line, code, df):
         """
         执行双均线策略，生成交易信号
 
@@ -136,8 +136,8 @@ class DoubleAverageLines:
         - 死叉：短周期MA从上方穿越长周期MA，产生卖出信号
         - 时间验证：只执行当前K线时间窗口内的有效信号
 
-        :param ma_x_line: 短周期均线的周期长度（例如5日均线）
-        :param ma_y_line: 长周期均线的周期长度（例如10日均线），必须大于ma_x_line
+        :param short_period_line: 短周期均线的周期长度（例如5日均线）
+        :param long_period_line: 长周期均线的周期长度（例如10日均线），必须大于short_period_line
         :param code: 交易对代码，例如 'BTCUSDT'
         :param df: 包含K线数据的DataFrame，必须有openTime、closePrice等列
         :return: 交易信号字符串：
@@ -146,7 +146,7 @@ class DoubleAverageLines:
                  - None：无明确交易信号
         """
 
-        print('\n' + code + ' 均线 ' + str(ma_x_line) + ' 和 ' + str(ma_y_line) + ' :')
+        print('\n' + code + ' 均线 ' + str(short_period_line) + ' 和 ' + str(long_period_line) + ' :')
 
         df[["openTime"]] = df[["openTime"]].astype(str)  # int类型 转换 成str类型，否则会被当做时间戳使用，造成时间错误
         df[["openTime2"]] = df[["openTime2"]].astype(str)  # int类型 转换 成str类型，否则会被当做时间戳使用，造成时间错误
@@ -159,13 +159,13 @@ class DoubleAverageLines:
         df = df.sort_index(ascending=True)
 
         # 求出均线
-        maX = df['closePrice'].rolling(ma_x_line).mean()
-        maY = df['closePrice'].rolling(ma_y_line).mean()
+        ma_short = df['closePrice'].rolling(short_period_line).mean()
+        ma_long = df['closePrice'].rolling(long_period_line).mean()
 
-        df = df[ma_y_line:]  # 这个切片很重要，否则会报错，因为数据不匹配
-        # 因为 ma_x_line < ma_y_line ,所以均线 切到 ma_y_line
-        maX = maX[ma_y_line:]  # 切片，与 df 数据条数保持一致
-        maY = maY[ma_y_line:]  # 切片，与 df 数据条数保持一致
+        df = df[long_period_line:]  # 这个切片很重要，否则会报错，因为数据不匹配
+        # 因为 short_period_line < long_period_line ,所以均线 切到 long_period_line
+        ma_short = ma_short[long_period_line:]  # 切片，与 df 数据条数保持一致
+        ma_long = ma_long[long_period_line:]  # 切片，与 df 数据条数保持一致
 
         # print("df数据行数=" + str(len(df)))
         # print(df)
@@ -183,8 +183,8 @@ class DoubleAverageLines:
         #     "minPrice"] + "\t" + last_row["closePrice"] + "\t" + str(last_row["closeTime"]) + "\t")
 
         print("-------------------------------------------------------\n")
-        s1 = maX < maY  # 得到 bool 类型的 Series
-        s2 = maX > maY
+        s1 = ma_short < ma_long  # 得到 bool 类型的 Series
+        s2 = ma_short > ma_long
 
         death_ex = s1 & s2.shift(1)  # 判定死叉的条件
         death_date = df.loc[death_ex].index  # 死叉对应的日期

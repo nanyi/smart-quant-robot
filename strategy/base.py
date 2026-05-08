@@ -38,10 +38,11 @@ class SignalStrategy(ABC):
         return 1.0
     
     @abstractmethod
-    def calculate(self, df):
+    def calculate(self, df, idx: int = -1):
         """计算交易信号
         
         :param df: K线数据 DataFrame
+        :param idx: 当前K线所在索引（回测时使用）
         :return: Signal 或 None
         """
         pass

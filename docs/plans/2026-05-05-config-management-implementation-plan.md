@@ -30,8 +30,10 @@ dingding:
   token2: ""
 
 trade:
-  ma_x: 5
-  ma_y: 60
+  strategy:
+    ma:
+      short_period: 5
+      long_period: 60
   kLine_type: '15m'
   binance_market: "SPOT"
   binance_coinBase: "USDT"
@@ -133,8 +135,12 @@ _DEFAULT_CONFIG = {
         'token2': '',
     },
     'trade': {
-        'ma_x': 5,
-        'ma_y': 60,
+        'strategy': {
+            'ma': {
+                'short_period': 5,
+                'slow_window': 60,
+            }
+        },
         'kLine_type': '15m',
         'binance_market': 'SPOT',
         'binance_coinBase': 'USDT',
@@ -344,7 +350,7 @@ git commit -m "refactor: BinanceAPI改用runtime_config获取配置"
 
 修改前：
 ```python
-from runtime_config import sellStrategy1, sellStrategy2, sellStrategy3, ma_x, ma_y, isOpenSellStrategy, kLine_type
+from runtime_config import sellStrategy1, sellStrategy2, sellStrategy3, short_period, long_period, isOpenSellStrategy, kLine_type
 ```
 
 修改后：
@@ -358,8 +364,8 @@ from runtime_config import config
 - `sellStrategy1` → `config.get('trade.sellStrategy1')`
 - `sellStrategy2` → `config.get('trade.sellStrategy2')`
 - `sellStrategy3` → `config.get('trade.sellStrategy3')`
-- `ma_x` → `config.get('trade.ma_x', 5)`
-- `ma_y` → `config.get('trade.ma_y', 60)`
+- `short_period` → `config.get('trade.strategy.ma.short_period', 5)`
+- `long_period` → `config.get('trade.strategy.ma.long_period', 60)`
 - `isOpenSellStrategy` → `config.get('trade.isOpenSellStrategy', False)`
 - `kLine_type` → `config.get('trade.kLine_type', '15m')`
 

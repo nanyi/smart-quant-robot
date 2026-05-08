@@ -91,13 +91,13 @@ class CompositeStrategy:
 
 ```python
 class MAStrategy(SignalStrategy):
-    def __init__(self, ma_x: int = 5, ma_y: int = 60):
-        self.ma_x = ma_x
-        self.ma_y = ma_y
+    def __init__(self, short_period: int = 5, long_period: int = 60):
+        self.short_period = short_period
+        self.long_period = long_period
     
     @property
     def name(self) -> str:
-        return f"MA_{self.ma_x}_{self.ma_y}"
+        return f"MA_{self.short_period}_{self.long_period}"
     
     def calculate(self, df: pd.DataFrame) -> Optional[Signal]:
         # 金叉买入、死叉卖出逻辑
@@ -191,8 +191,8 @@ strategy:
       volatility: 0.3
       volume: 0.2
   ma:
-    ma_x: 5
-    ma_y: 60
+    short_period: 5
+    long_period: 60
   volatility:
     period: 20
     multiplier: 2

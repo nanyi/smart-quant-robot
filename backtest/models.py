@@ -2,7 +2,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List
 
 
 class OrderSide(Enum):
@@ -82,18 +81,18 @@ class BacktestTrade:
 
 @dataclass
 class BacktestStats:
-    initial_capital: float
-    final_capital: float
-    total_trades: int = 0
-    winning_trades: int = 0
-    losing_trades: int = 0
-    total_profit: float = 0
-    total_loss: float = 0
-    max_drawdown: float = 0
+    initial_capital: float  # 初始资金
+    final_capital: float # 最终资金
+    total_trades: int = 0 # 总交易次数
+    winning_trades: int = 0 # 盈利交易次数
+    losing_trades: int = 0  # 亏损交易次数
+    total_profit: float = 0  # 总盈利
+    total_loss: float = 0  # 总亏损
+    max_drawdown: float = 0 # 最大回撤
     max_drawdown_ratio: float = 0
-    win_rate: float = 0
-    profit_factor: float = 0
-    sharpe_ratio: float = 0
+    win_rate: float = 0 # 胜率
+    profit_factor: float = 0  # 盈利因子
+    sharpe_ratio: float = 0  # 夏普比率
 
     def calculate(self):
         self.total_trades = self.winning_trades + self.losing_trades

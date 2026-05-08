@@ -25,10 +25,15 @@ class VolumeStrategy(SignalStrategy):
     def weight(self) -> float:
         return 1.0
     
-    def calculate(self, df) -> Optional[Signal]:
+    def calculate(self, df, idx: int = -1) -> Optional[Signal]:
         if df is None or len(df) < max(self.vol_ma, self.price_ma):
             return None
-        
+
+        if idx > -1:
+            current_time = df.iloc[idx]['closeTime']
+        else:
+            current_time = int(time_module.mktime(time_module.gmtime()) * 1000)
+
         df = df.copy()
         df['openTime'] = pd.to_datetime(df['openTime'], unit='ms')
         df['closeTime'] = pd.to_datetime(df['closeTime'], unit='ms')

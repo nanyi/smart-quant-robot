@@ -37,8 +37,12 @@ _DEFAULT_CONFIG = {
         'to_user': '@all',
     },
     'trade': {
-        'ma_x': 5,
-        'ma_y': 60,
+        'strategy': {
+            'ma': {
+                'short_period': 5,
+                'long_period': 60
+            }
+        },
         'kLine_type': '15m',
         'binance_market': 'SPOT',
         'binance_coinBase': 'USDT',
@@ -97,10 +101,15 @@ class Config:
     """全局配置单例"""
     _instance = None
 
-    def __init__(self):
-        self._config = copy.deepcopy(_DEFAULT_CONFIG)
-        self._load_from_yaml()
-        self._load_from_sqlite()
+    def __init__(self, _supper: Any = None, _config: dict = None):
+        """初始化配置"""
+        self._supper = _supper
+        if _config:
+            self._config = _config
+        else:
+            self._config = copy.deepcopy(_DEFAULT_CONFIG)
+            self._load_from_yaml()
+            self._load_from_sqlite()
 
     @classmethod
     def get_instance(cls):
@@ -219,7 +228,7 @@ class Config:
                 value = value[key]
             else:
                 return default
-        return value if value is not None else default
+        return (Config(self, value) if isinstance(value, dict) else value) if value is not None else default
 
     def set(self, key_path: str, value: Any):
         """设置配置值，支持点号路径"""
@@ -233,3 +242,16 @@ class Config:
 
 
 config = Config.get_instance()
+
+if __name__ == '__main__':
+    trade_config = config.get('trade')
+    print(trade_config)
+    strategy_config = trade_config.get('strategy')
+    print(strategy_config)
+    ma_config = strategy_config.get('ma')
+    print(ma_config)
+    print(ma_config.get('short_period'))
+    print(config.get('trade.strategy.ma.short_period'))
+    ma_config.set('ssss', 22)
+    print(config.get('trade.strategy.ma.ssss'))
+    print(ma_config.get('ssss'))

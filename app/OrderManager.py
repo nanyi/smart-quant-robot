@@ -33,9 +33,10 @@ def create_strategy():
     strategies = []
     
     if 'ma' in enabled_strategies:
-        ma_x = config.get('trade.ma_x', 5)
-        ma_y = config.get('trade.ma_y', 60)
-        strategies.append(MAStrategy(ma_x=ma_x, ma_y=ma_y))
+        ma_config = config.get('trade.strategy.ma')
+        short_period = ma_config.get('short_period')
+        long_period = config.get('long_period')
+        strategies.append(MAStrategy(short_period=short_period, long_period=long_period))
     
     if 'volatility' in enabled_strategies:
         strategies.append(VolatilityStrategy())
@@ -57,7 +58,7 @@ def create_strategy():
     elif len(strategies) > 1:
         return CompositeStrategy(strategies, weights)
     else:
-        return MAStrategy(ma_x=5, ma_y=60)
+        return MAStrategy(short_period=5, long_period=60)
 
 
 dALines = None
