@@ -6,34 +6,34 @@ from strategy.base import SignalStrategy, Signal, SignalType
 
 class CompositeStrategy(SignalStrategy):
     """策略组合器 - 动态加权合成"""
-    
-    def __init__(self, strategies: List[SignalStrategy], weights: List[float]):
+
+    def __init__(self, strategies: List[SignalStrategy], weights: dict[str, float] = None):
         self.strategies = strategies
         self.weights = weights
-    
+
     @property
     def name(self) -> str:
         return "composite"
-    
+
     @property
     def weight(self) -> float:
         return 1.0
-    
-    def calculate(self, df, idx: int = -1) -> Optional[Signal]:
+
+    def calculate(self, df) -> Optional[Signal]:
         signals = []
         for strategy in self.strategies:
-            signal = strategy.calculate(df, idx)
+            signal = strategy.calculate(df)
             if signal:
                 signals.append(signal)
-        
+
         if not signals:
             return None
-        
+
         buy_score = sum(s.weight for s in signals if s.signal_type == SignalType.BUY)
         sell_score = sum(s.weight for s in signals if s.signal_type == SignalType.SELL)
-        
+
         threshold = 0.5
-        
+
         if buy_score > sell_score and buy_score > threshold:
             latest = signals[-1]
             for s in reversed(signals):

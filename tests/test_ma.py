@@ -22,7 +22,7 @@ class TestMAStrategy(BaseStrategyTestCase):
         signals = []
         for idx in range(len(df)):
             before_df = df[:idx + 1]
-            signal = strategy.calculate(before_df, idx)
+            signal = strategy.calculate(before_df)
             if signal:
                 signals.append((idx, signal))
                 print(f"索引 {idx} | 时间: {signal.time} | "
@@ -50,7 +50,7 @@ class TestMAStrategy(BaseStrategyTestCase):
         signal = strategy.calculate(df)
         self.assertIs(signal, None, "数据不足时应返回None")
 
-        signal = strategy.calculate(df, 15)
+        signal = strategy.calculate(df.iloc[:15])
         self.assertIs(signal, None, "数据不足时应返回None")
 
         print("✓ 数据不足测试通过\n")
@@ -67,7 +67,7 @@ class TestMAStrategy(BaseStrategyTestCase):
         signals = []
         for idx in range(len(df)):
             before_df = df[:idx + 1]
-            signal = strategy.calculate(before_df, idx)
+            signal = strategy.calculate(before_df)
             if signal:
                 signals.append(signal)
 
@@ -110,7 +110,7 @@ class TestMAStrategy(BaseStrategyTestCase):
 
             for idx in range(len(df)):
                 before_df = df[:idx + 1]
-                if strategy.calculate(before_df, idx):
+                if strategy.calculate(before_df):
                     signal_count += 1
 
             print(f"MA({short_period}, {long_period}): 生成 {signal_count} 个信号")

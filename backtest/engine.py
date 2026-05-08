@@ -108,13 +108,13 @@ class BacktestEngine:
             self._check_and_fill_orders(current_price, current_time)
 
             before_df = df[:idx + 1]
-            signal = strategy.calculate(before_df, idx)
+            signal = strategy.calculate(before_df)
             if signal and signal.signal_type == SignalType.BUY:
                 self._execute_buy(symbol, current_price, current_time, signal.weight)
             elif signal and signal.signal_type == SignalType.SELL:
                 self._execute_sell(symbol, current_price, current_time)
 
-            self._update_positions(current_price)
+            self._update_positions(symbol, current_price)
 
         self._calculate_final_stats()
         return self.stats
@@ -233,8 +233,9 @@ class BacktestEngine:
         self.orders.append(order)
         self._fill_order(order, price, time)
 
-    def _update_positions(self, current_price: float):
-        for symbol, position in self.positions.items():
+    def _update_positions(self, symbol: str, current_price: float):
+        position = self.positions[symbol] if symbol in self.positions else None
+        if position:
             position.update_current_price(current_price)
 
     def _calculate_final_stats(self):

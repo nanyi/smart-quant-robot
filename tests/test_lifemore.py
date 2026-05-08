@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
+from backtest import BacktestReporter
 from strategy.lifemore import LivermoreStrategy
 from strategy.base import SignalType
 from tests import BaseStrategyTestCase
@@ -16,7 +17,8 @@ class TestLivermoreStrategy(BaseStrategyTestCase):
         
         signals = []
         for idx in range(len(df)):
-            signal = strategy.calculate(df, idx)
+            before_df = df[:idx + 1]
+            signal = strategy.calculate(before_df)
             if signal:
                 signals.append(signal)
         
@@ -35,8 +37,8 @@ class TestLivermoreStrategy(BaseStrategyTestCase):
         
         df_small = df.copy()
         df_small.iloc[-1, df_small.columns.get_loc('closePrice')] = 94.0
-        
-        signal = strategy.calculate(df_small, len(df_small) - 1)
+
+        signal = strategy.calculate(df_small)
         if signal:
             self.assertEqual(signal.signal_type, SignalType.SELL)
         print("止损测试通过")
@@ -45,8 +47,8 @@ class TestLivermoreStrategy(BaseStrategyTestCase):
         df = self.generate_test_data(days=5)
         strategy = LivermoreStrategy(breakout_period=30)
         strategy.reset()
-        
-        signal = strategy.calculate(df, len(df) - 1)
+
+        signal = strategy.calculate(df)
         self.assertIsNone(signal)
         print("数据不足测试通过")
 
@@ -59,6 +61,9 @@ class TestLivermoreStrategy(BaseStrategyTestCase):
         
         engine = BacktestEngine(initial_capital=10000.0)
         stats = engine.run_with_data(strategy, df, symbol="TEST")
+
+        reporter = BacktestReporter(stats, engine.get_orders(), engine.get_trades())
+        print(reporter.generate_text_report())
         
         self.assertGreater(stats.final_capital, 0)
         print(f"回测资金: {stats.final_capital:.2f}")

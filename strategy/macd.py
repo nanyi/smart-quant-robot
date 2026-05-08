@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Optional
 import pandas as pd
+import time as time_module
 
 from strategy.base import SignalStrategy, Signal, SignalType
 
@@ -26,20 +27,15 @@ class MACDStrategy(SignalStrategy):
     def weight(self) -> float:
         return 1.0
     
-    def calculate(self, df, idx: int = -1) -> Optional[Signal]:
+    def calculate(self, df) -> Optional[Signal]:
         if df is None or len(df) < self.slow + self.signal:
             return None
 
-        if idx > -1:
-            current_time = df.iloc[idx]['closeTime']
-        else:
-            current_time = int(time_module.mktime(time_module.gmtime()) * 1000)
-
+        # 创建副本
         df = df.copy()
-        df['openTime'] = pd.to_datetime(df['openTime'], unit='ms')
-        df['closeTime'] = pd.to_datetime(df['closeTime'], unit='ms')
-        df = df.sort_values('openTime', ascending=True)
-        
+        current_bar = df.iloc[-1]
+        current_time = current_bar['closeTime']
+
         ema_fast = df['closePrice'].ewm(span=self.fast, adjust=False).mean()
         ema_slow = df['closePrice'].ewm(span=self.slow, adjust=False).mean()
         df['DIF'] = ema_fast - ema_slow
@@ -51,24 +47,23 @@ class MACDStrategy(SignalStrategy):
         
         buy_signal = (dif > dea) & (dif.shift(1) <= dea.shift(1))
         sell_signal = (dif < dea) & (dif.shift(1) >= dea.shift(1))
-        
-        for i in range(len(df) - 1, -1, -1):
-            if buy_signal.iloc[i]:
-                return Signal(
-                    signal_type=SignalType.BUY,
-                    strategy_name=self.name,
-                    weight=self.weight,
-                    price=float(df.iloc[i]['closePrice']),
-                    time=str(df.iloc[i]['openTime']),
-                    confidence=1.0
-                )
-            if sell_signal.iloc[i]:
-                return Signal(
-                    signal_type=SignalType.SELL,
-                    strategy_name=self.name,
-                    weight=self.weight,
-                    price=float(df.iloc[i]['closePrice']),
-                    time=str(df.iloc[i]['openTime']),
-                    confidence=1.0
-                )
+
+        if buy_signal.iloc[-1]:
+            return Signal(
+                signal_type=SignalType.BUY,
+                strategy_name=self.name,
+                weight=self.weight,
+                price=float(current_bar['closePrice']),
+                time=str(pd.to_datetime(current_time, unit='ms')),
+                confidence=1.0
+            )
+        if sell_signal.iloc[-1]:
+            return Signal(
+                signal_type=SignalType.SELL,
+                strategy_name=self.name,
+                weight=self.weight,
+                price=float(current_bar['closePrice']),
+                time=str(pd.to_datetime(current_time, unit='ms')),
+                confidence=1.0
+            )
         return None
