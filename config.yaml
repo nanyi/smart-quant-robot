@@ -56,6 +56,8 @@ strategy:
     - "macd"
     - "volatility"
     - "volume"
+    - "lifemore"
+    - "turtle"
   weights:
     ma: 1.0
     rsi: 0.8
@@ -63,7 +65,20 @@ strategy:
     macd: 0.8
     volatility: 0.7
     volume: 0.7
+    lifemore: 1.0
+    turtle: 1.0
   threshold: 0.5
+  lifemore:
+    breakout_period: 30
+    pyramid_ratio: 0.05
+    stop_loss_ratio: 0.10
+    exit_ratio: 0.20
+  turtle:
+    entry_period: 20
+    exit_period: 10
+    atr_period: 20
+    risk_ratio: 0.02
+    max_units: 4
 
 backtest:
   enabled: true

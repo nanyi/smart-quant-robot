@@ -24,7 +24,8 @@ def create_strategy():
     """创建策略实例，支持多策略组合"""
     from strategy import (
         MAStrategy, CompositeStrategy, VolatilityStrategy,
-        VolumeStrategy, RSIStrategy, BollingerStrategy, MACDStrategy
+        VolumeStrategy, RSIStrategy, BollingerStrategy, MACDStrategy,
+        LivermoreStrategy, TurtleStrategy
     )
     
     enabled_strategies = config.get('strategy.enabled_strategies', ['ma'])
@@ -34,8 +35,8 @@ def create_strategy():
     
     if 'ma' in enabled_strategies:
         ma_config = config.get('trade.strategy.ma')
-        short_period = ma_config.get('short_period')
-        long_period = config.get('long_period')
+        short_period = ma_config.get('short_period', 5)
+        long_period = ma_config.get('long_period', 60)
         strategies.append(MAStrategy(short_period=short_period, long_period=long_period))
     
     if 'volatility' in enabled_strategies:
@@ -52,6 +53,25 @@ def create_strategy():
     
     if 'macd' in enabled_strategies:
         strategies.append(MACDStrategy())
+    
+    if 'lifemore' in enabled_strategies:
+        lifemore_config = config.get('strategy.lifemore', {})
+        strategies.append(LivermoreStrategy(
+            breakout_period=lifemore_config.get('breakout_period', 30),
+            pyramid_ratio=lifemore_config.get('pyramid_ratio', 0.05),
+            stop_loss_ratio=lifemore_config.get('stop_loss_ratio', 0.10),
+            exit_ratio=lifemore_config.get('exit_ratio', 0.20),
+        ))
+    
+    if 'turtle' in enabled_strategies:
+        turtle_config = config.get('strategy.turtle', {})
+        strategies.append(TurtleStrategy(
+            entry_period=turtle_config.get('entry_period', 20),
+            exit_period=turtle_config.get('exit_period', 10),
+            atr_period=turtle_config.get('atr_period', 20),
+            risk_ratio=turtle_config.get('risk_ratio', 0.02),
+            max_units=turtle_config.get('max_units', 4),
+        ))
     
     if len(strategies) == 1:
         return strategies[0]
