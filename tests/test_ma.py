@@ -110,6 +110,19 @@ def save_backtest_data(df, strategy, engine, stats):
     if not trades_df.empty:
         trades_df.to_excel(generate_unique_filename("./backtest/report/backtest_trades.xlsx"), index=False)
 
+    # 保存仓位数据
+    positions_dict = engine.get_positions()
+    if positions_dict:
+        positions_df = pd.DataFrame([{
+            'symbol': pos.symbol,
+            'side': pos.side.value,
+            'quantity': pos.quantity,
+            'entry_price': pos.entry_price,
+            'current_price': pos.current_price,
+            'unrealized_pnl': pos.unrealized_pnl
+        } for pos in positions_dict.values()])
+        
+        positions_df.to_excel(generate_unique_filename("./backtest/report/backtest_positions.xlsx"), index=False)
 
 class MyTestCase(unittest.TestCase):
     """
