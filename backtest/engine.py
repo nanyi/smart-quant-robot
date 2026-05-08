@@ -9,6 +9,7 @@ from backtest.models import (
     BacktestPosition,
     BacktestTrade,
     BacktestStats,
+    PositionRecord,
     OrderSide,
     OrderType,
     OrderStatus,
@@ -99,14 +100,12 @@ class BacktestEngine:
 
     def run_with_data(self, strategy, df: pd.DataFrame, symbol: str) -> BacktestStats:
         for idx in range(len(df)):
-            current_bar = df.iloc[idx] # K线
-            current_price = current_bar["closePrice"] # 当前价格
-            current_time = current_bar["openTime"] # 当前时间
+            current_bar = df.iloc[idx]
+            current_price = current_bar["closePrice"]
+            current_time = current_bar["openTime"]
 
-            # 检查订单
             self._check_and_fill_orders(current_price, current_time)
 
-            # 获取idx处及之前的K线数据
             before_df = df[:idx + 1]
             signal = strategy.calculate(before_df, idx)
             if signal and signal.signal_type == SignalType.BUY:
@@ -116,8 +115,7 @@ class BacktestEngine:
 
             self._update_positions(current_price)
 
-        self.stats.final_capital = self.current_capital
-        self._calculate_stats()
+        self._calculate_final_stats()
         return self.stats
 
     def _check_and_fill_orders(self, current_price: float, current_time: datetime):
@@ -132,24 +130,55 @@ class BacktestEngine:
     def _fill_order(self, order: BacktestOrder, fill_price: float, fill_time: datetime):
         order.filled_quantity = order.quantity
         order.status = OrderStatus.FILLED
-        order.update_time = pd.to_datetime(fill_time, unit="ms")
+        order.update_time = fill_time
 
         commission = fill_price * order.quantity * self.commission_rate
 
         if order.side == OrderSide.BUY:
             self.current_capital -= fill_price * order.quantity + commission
-            position = BacktestPosition(
-                symbol=order.symbol,
-                side=PositionSide.LONG,
-                quantity=order.quantity,
-                entry_price=fill_price,
-                current_price=fill_price,
-            )
-            self.positions[order.symbol] = position
-        else:
-            self.current_capital += fill_price * order.quantity - commission
             if order.symbol in self.positions:
+                position = self.positions[order.symbol]
+                total_cost = position.avg_entry_price * position.quantity + fill_price * order.quantity
+                total_qty = position.quantity + order.quantity
+                position.avg_entry_price = total_cost / total_qty
+                position.quantity = total_qty
+                position.current_price = fill_price
+            else:
+                position = BacktestPosition(
+                    symbol=order.symbol,
+                    side=PositionSide.LONG,
+                    quantity=order.quantity,
+                    avg_entry_price=fill_price,
+                    current_price=fill_price,
+                    open_time=fill_time,
+                )
+                self.positions[order.symbol] = position
+        else:
+            if order.symbol in self.positions:
+                position = self.positions[order.symbol]
+                pnl = (fill_price - position.avg_entry_price) * order.quantity - commission
+                pnl_ratio = pnl / (position.avg_entry_price * order.quantity)
+                hold_seconds = int((fill_time - position.open_time).total_seconds() * 1000) if position.open_time else 0
+
+                record = PositionRecord(
+                    symbol=order.symbol,
+                    side=position.side,
+                    quantity=order.quantity,
+                    entry_price=position.avg_entry_price,
+                    exit_price=fill_price,
+                    pnl=pnl,
+                    pnl_ratio=pnl_ratio,
+                    commission=commission,
+                    open_time=position.open_time or fill_time,
+                    close_time=fill_time,
+                    hold_seconds=hold_seconds,
+                )
+                self.stats.position_records.append(record)
+
+                self.current_capital += fill_price * order.quantity - commission
                 del self.positions[order.symbol]
+            else:
+                self.current_capital += fill_price * order.quantity - commission
 
         trade = BacktestTrade(
             trade_id=str(uuid.uuid4()),
@@ -160,7 +189,7 @@ class BacktestEngine:
             quantity=order.quantity,
             turnover=fill_price * order.quantity,
             commission=commission,
-            trade_time=pd.to_datetime(fill_time, unit="ms"),
+            trade_time=fill_time,
         )
         self.trades.append(trade)
 
@@ -207,48 +236,40 @@ class BacktestEngine:
         for symbol, position in self.positions.items():
             position.update_current_price(current_price)
 
-    def _calculate_stats(self):
+    def _calculate_final_stats(self):
+        position_value = sum(p.position_value for p in self.positions.values())
+        self.stats.cash = self.current_capital
+        self.stats.position_value = position_value
+        self.stats.final_capital = self.current_capital + position_value
+        self.stats.current_positions = self.positions
+
         total_profit = 0.0
         total_loss = 0.0
         peak_capital = self.initial_capital
         max_drawdown = 0.0
 
-        capital_curve = [self.initial_capital]
+        for record in self.stats.position_records:
+            if record.pnl > 0:
+                total_profit += record.pnl
+            else:
+                total_loss += abs(record.pnl)
 
-        for trade in self.trades:
-            if trade.side == OrderSide.SELL:
-                sell_revenue = trade.price * trade.quantity
-                
-                buy_cost = 0.0
-                for prev_trade in self.trades:
-                    if (prev_trade.symbol == trade.symbol and 
-                        prev_trade.side == OrderSide.BUY and
-                        prev_trade.trade_time <= trade.trade_time):
-                        buy_cost += prev_trade.price * prev_trade.quantity
-                
-                pnl = sell_revenue - buy_cost - trade.commission
-                
-                if pnl > 0:
-                    total_profit += pnl
-                    self.stats.winning_trades += 1
-                else:
-                    total_loss += abs(pnl)
-                    self.stats.losing_trades += 1
+        realized_pnl = total_profit - total_loss
+        unrealized_pnl = sum(p.unrealized_pnl for p in self.positions.values())
+        current_capital = self.current_capital + unrealized_pnl
 
-            current_capital = self.current_capital
-            for symbol, position in self.positions.items():
-                current_capital += position.unrealized_pnl
+        capital_curve = [self.initial_capital, current_capital]
 
-            capital_curve.append(current_capital)
-
-            if current_capital > peak_capital:
-                peak_capital = current_capital
-            drawdown = peak_capital - current_capital
-            if drawdown > max_drawdown:
-                max_drawdown = drawdown
+        if current_capital > peak_capital:
+            peak_capital = current_capital
+        drawdown = peak_capital - current_capital
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
 
         self.stats.total_profit = total_profit
         self.stats.total_loss = total_loss
+        self.stats.winning_trades = len([r for r in self.stats.position_records if r.pnl > 0])
+        self.stats.losing_trades = len([r for r in self.stats.position_records if r.pnl <= 0])
         self.stats.max_drawdown = max_drawdown
         self.stats.calculate()
 

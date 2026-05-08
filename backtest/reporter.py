@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 import json
 
-from backtest.models import BacktestOrder, BacktestTrade, BacktestStats, OrderSide
+from backtest.models import BacktestOrder, BacktestTrade, BacktestStats, BacktestPosition, PositionRecord, OrderSide
 
 
 class BacktestReporter:
@@ -22,9 +22,39 @@ class BacktestReporter:
         lines.append("【账户信息】")
         lines.append(f"  初始资金: {self.stats.initial_capital:.2f} USDT")
         lines.append(f"  最终资金: {self.stats.final_capital:.2f} USDT")
+        lines.append(f"  现金: {self.stats.cash:.2f} USDT")
+        lines.append(f"  持仓市值: {self.stats.position_value:.2f} USDT")
         lines.append(f"  总收益: {self.stats.final_capital - self.stats.initial_capital:.2f} USDT")
         lines.append(f"  收益率: {(self.stats.final_capital / self.stats.initial_capital - 1) * 100:.2f}%")
         lines.append("")
+
+        if self.stats.current_positions:
+            lines.append("【当前持仓】")
+            for symbol, pos in self.stats.current_positions.items():
+                pnl_sign = "+" if pos.unrealized_pnl >= 0 else ""
+                pnl_ratio_sign = "+" if pos.unrealized_pnl_ratio >= 0 else ""
+                lines.append(
+                    f"  {symbol} | {pos.side.value} | 数量: {pos.quantity:.4f} | "
+                    f"成本: {pos.avg_entry_price:.4f} | 当前: {pos.current_price:.4f} | "
+                    f"浮动盈亏: {pnl_sign}{pos.unrealized_pnl:.2f} ({pnl_ratio_sign}{pos.unrealized_pnl_ratio * 100:.2f}%)"
+                )
+            lines.append("")
+
+        if self.stats.position_records:
+            lines.append("【持仓记录】")
+            for record in self.stats.position_records:
+                pnl_sign = "+" if record.pnl >= 0 else ""
+                pnl_ratio_sign = "+" if record.pnl_ratio >= 0 else ""
+                hold_days = record.hold_seconds / 86400
+                open_time_str = record.open_time.strftime('%Y-%m-%d') if isinstance(record.open_time, datetime) else str(record.open_time)
+                close_time_str = record.close_time.strftime('%Y-%m-%d') if isinstance(record.close_time, datetime) else str(record.close_time)
+                lines.append(
+                    f"  {record.symbol} | 开仓: {record.entry_price:.4f} @ {open_time_str} | "
+                    f"平仓: {record.exit_price:.4f} @ {close_time_str} | "
+                    f"盈亏: {pnl_sign}{record.pnl:.2f} ({pnl_ratio_sign}{record.pnl_ratio * 100:.2f}%) | "
+                    f"持仓: {hold_days:.1f}天"
+                )
+            lines.append("")
 
         lines.append("【交易统计】")
         lines.append(f"  总交易次数: {self.stats.total_trades}")
@@ -58,6 +88,8 @@ class BacktestReporter:
             "account": {
                 "initial_capital": self.stats.initial_capital,
                 "final_capital": self.stats.final_capital,
+                "cash": self.stats.cash,
+                "position_value": self.stats.position_value,
                 "total_return": self.stats.final_capital - self.stats.initial_capital,
                 "return_rate": (self.stats.final_capital / self.stats.initial_capital - 1),
             },
@@ -77,6 +109,35 @@ class BacktestReporter:
                 "max_drawdown_ratio": self.stats.max_drawdown_ratio,
                 "sharpe_ratio": self.stats.sharpe_ratio,
             },
+            "current_positions": [
+                {
+                    "symbol": pos.symbol,
+                    "side": pos.side.value,
+                    "quantity": pos.quantity,
+                    "avg_entry_price": pos.avg_entry_price,
+                    "current_price": pos.current_price,
+                    "unrealized_pnl": pos.unrealized_pnl,
+                    "unrealized_pnl_ratio": pos.unrealized_pnl_ratio,
+                    "position_value": pos.position_value,
+                }
+                for pos in self.stats.current_positions.values()
+            ],
+            "position_records": [
+                {
+                    "symbol": r.symbol,
+                    "side": r.side.value,
+                    "quantity": r.quantity,
+                    "entry_price": r.entry_price,
+                    "exit_price": r.exit_price,
+                    "pnl": r.pnl,
+                    "pnl_ratio": r.pnl_ratio,
+                    "commission": r.commission,
+                    "open_time": r.open_time.isoformat() if isinstance(r.open_time, datetime) else str(r.open_time),
+                    "close_time": r.close_time.isoformat() if isinstance(r.close_time, datetime) else str(r.close_time),
+                    "hold_seconds": r.hold_seconds,
+                }
+                for r in self.stats.position_records
+            ],
             "orders": {
                 "total_orders": len(self.orders),
                 "filled_orders": len([o for o in self.orders if o.is_filled]),
@@ -103,6 +164,8 @@ class BacktestReporter:
             "account": {
                 "initial_capital": self.stats.initial_capital,
                 "final_capital": self.stats.final_capital,
+                "cash": self.stats.cash,
+                "position_value": self.stats.position_value,
                 "total_return": self.stats.final_capital - self.stats.initial_capital,
                 "return_rate": (self.stats.final_capital / self.stats.initial_capital - 1),
             },
