@@ -10,7 +10,7 @@
 
 ## 1. 项目概述
 
-Smart Quant Robot 是一个基于 Binance 交易所的数字货币量化交易系统，采用双均线交易策略（金叉买入、死叉卖出）实现自动化交易。
+Smart Quant Robot 是一个基于 Binance 交易所的数字货币量化交易系统，支持**多策略动态加权合成**，可同时运行多个交易策略。
 
 ### 1.1 系统架构
 
@@ -24,7 +24,7 @@ Smart Quant Robot 是一个基于 Binance 交易所的数字货币量化交易�
         ▼                           ▼                           ▼
 ┌───────────────┐          ┌───────────────┐          ┌───────────────┐
 │  订单管理     │          │  交易策略     │          │  通知服务     │
-│  OrderManager │          │  DoubleAvg    │          │  DingDing     │
+│  OrderManager │          │  策略组合器   │          │  DingDing     │
 └───────────────┘          └───────────────┘          └───────────────┘
         │                           │                           │
         ▼                           ▼                           ▼
@@ -41,6 +41,7 @@ Smart Quant Robot 是一个基于 Binance 交易所的数字货币量化交易�
 | Python | Python | 3.7+ |
 | 数据分析 | Pandas | - |
 | 交易所API | Binance API | - |
+| 数据库 | SQLite | - |
 | 通知 | 钉钉自定义机器人 | - |
 | 定时任务 | Schedule | - |
 
@@ -50,15 +51,48 @@ Smart Quant Robot 是一个基于 Binance 交易所的数字货币量化交易�
 smart-quant-robot/
 ├── app/
 │   ├── __init__.py
-│   ├── authorization.py    # API密钥配置
 │   ├── BinanceAPI.py       # 币安API封装
-│   ├── dingding.py         # 钉钉通知
-│   └── OrderManager.py     # 订单管理器（核心业务逻辑）
+│   ├── OrderManager.py     # 订单管理器
+│   ├── notifier.py         # 钉钉通知
+│   └── services/
+│       └── kline_service.py # K线服务层
 ├── strategy/
 │   ├── __init__.py
-│   └── DoubleAverageLinesStrategy.py  # 双均线策略
-├── runtime_config.py        # 运行时配置（策略参数、交易对等）
-├── main.py                 # 程序入口
+│   ├── base.py             # 策略基类
+│   ├── ma.py               # 双均线策略
+│   ├── composite.py        # 策略组合器
+│   ├── volatility.py       # 波动率突破策略
+│   ├── volume.py           # 成交量验证策略
+│   ├── rsi.py             # RSI策略
+│   ├── bollinger.py       # 布林带策略
+│   ├── macd.py            # MACD策略
+│   ├── lifemore.py         # 利费莫尔策略
+│   └── turtle.py           # 海龟策略
+├── backtest/
+│   ├── __init__.py
+│   ├── models.py           # 回测数据模型
+│   ├── engine.py           # 回测引擎
+│   ├── reporter.py         # 回测报告生成器
+│   ├── ma_backtest.py      # 双均线策略回测
+│   ├── lifemore_backtest.py # 利费莫尔回测
+│   └── turtle_backtest.py   # 海龟回测
+├── db/
+│   ├── __init__.py
+│   ├── manager.py         # 数据库管理器
+│   ├── kline_repo.py      # K线数据仓库
+│   └── kline_data.py      # K线数据模型
+├── scripts/
+│   └── load_kline.py      # K线数据加载脚本
+├── tests/
+│   ├── __init__.py
+│   ├── test_ma.py         # 双均线策略测试
+│   ├── test_lifemore.py   # 利费莫尔策略测试
+│   └── test_turtle.py     # 海龟策略测试
+├── docs/
+│   └── plans/             # 设计文档
+├── runtime_config.py       # 运行时配置
+├── config.yaml            # 配置文件
+├── main.py                # 程序入口
 ├── AGENTS.md               # 开发规范
 └── README.md               # 项目说明
 ```
@@ -69,8 +103,23 @@ smart-quant-robot/
 |--------|----------|------|
 | MOD-001 | BinanceAPI | 币安交易所API封装，订单操作、行情查询 |
 | MOD-002 | OrderManager | 订单生命周期管理，买入/卖出/持久化 |
-| MOD-003 | DoubleAverageLinesStrategy | 双均线策略实现，金叉死叉信号识别 |
-| MOD-004 | DingDingNotification | 钉钉机器人通知，交易状态推送 |
+| MOD-003 | Strategy | 策略基类+8种策略实现，动态加权合成 |
+| MOD-004 | Backtest | 回测引擎，支持策略效果评估 |
+| MOD-005 | KlineService | K线数据服务，批量加载和存储 |
+| MOD-006 | DingDingNotification | 钉钉机器人通知，交易状态推送 |
+
+### 1.5 支持的策略
+
+| 策略 | 说明 | 默认权重 |
+|------|------|----------|
+| MA | 双均线策略（金叉买入、死叉卖出） | 1.0 |
+| RSI | 相对强弱指数策略（超卖买入、超买卖出） | 0.8 |
+| Bollinger | 布林带策略（触及下轨买入、上轨卖出） | 0.8 |
+| MACD | 指数平滑异同移动平均线（金叉买入、死叉卖出） | 0.8 |
+| Volatility | 波动率突破策略（突破上轨买入、跌破下轨卖出） | 0.7 |
+| Volume | 成交量验证策略（量增价涨买入、量缩价跌卖出） | 0.7 |
+| Livermore | 利费莫尔法则（突破前高买入、跌破前低卖出，含金字塔加仓和移动止损） | 1.0 |
+| Turtle | 海龟交易法则（唐奇安通道+ATR止损） | 1.0 |
 
 ---
 
@@ -166,6 +215,7 @@ from app.authorization import api_key, api_secret
 
 示例：
 - feat(order): 添加分批卖出策略功能
+- feat(strategy): 添加利费莫尔交易策略
 - fix(strategy): 修复双均线金叉判断逻辑
 - docs: 更新README文档
 ```
@@ -185,19 +235,23 @@ from app.authorization import api_key, api_secret
 
 ### 策略参数配置
 
-所有策略参数集中在 `runtime_config.py` 中：
+所有策略参数集中在 `runtime_config.py` 和 `config.yaml` 中：
 
-```python
-# 均线配置，short_period 必须大于 long_period
-short_period = 5   # 短周期均线
-long_period = 60  # 长周期均线
-
-# K线周期
-kLine_type = '15m'  # 支持: 5m, 15m, 30m, 1h, 1d 等
-
-# 分批卖出策略
-isOpenSellStrategy = True
-sellStrategy1 = {"profit": 1.05, "sell": 0.1}  # 盈利5%时卖出10%仓位
+```yaml
+strategy:
+  ma:
+    short_period: 5               # 短周期均线
+    long_period: 60              # 长周期均线
+  lifemore:
+    breakout_period: 30          # 突破周期
+    pyramid_ratio: 0.05          # 金字塔加仓比例
+    stop_loss_ratio: 0.10         # 止损比例
+  turtle:
+    entry_period: 20             # 入场唐奇安通道周期
+    exit_period: 10              # 出场唐奇安通道周期
+    atr_period: 20                # ATR周期
+    risk_ratio: 0.02             # 单笔风险比例
+    max_units: 4                 # 最大持仓单位
 ```
 
 ### 订单管理流程
@@ -205,18 +259,17 @@ sellStrategy1 = {"profit": 1.05, "sell": 0.1}  # 盈利5%时卖出10%仓位
 ```
 买入流程：
 1. 获取K线数据 → DataFrame转换
-2. 双均线策略判断 → 金叉信号
-3. 验证信号有效性（时间窗口）
+2. 多策略计算 → 信号合成
+3. 综合得分 > 阈值 → 执行买入
 4. 检查资产余额
 5. 执行买入限价单
-6. 保存订单信息到本地JSON
+6. 保存订单信息
 
 卖出流程：
-1. 获取死叉信号
-2. 检查本地订单信息
-3. 检查持仓数量
-4. 执行卖出限价单
-5. 清理本地订单信息
+1. 获取卖出信号
+2. 检查持仓数量
+3. 执行卖出限价单
+4. 清理订单信息
 ```
 
 ### API 调用规范
@@ -233,7 +286,37 @@ sellStrategy1 = {"profit": 1.05, "sell": 0.1}  # 盈利5%时卖出10%仓位
 
 ---
 
-## 5. 测试规范
+## 5. 回测系统开发规范
+
+### 回测引擎使用
+
+```python
+from backtest import BacktestEngine, BacktestReporter
+from strategy import MAStrategy, CompositeStrategy, LivermoreStrategy, TurtleStrategy
+
+# 创建回测引擎
+engine = BacktestEngine(initial_capital=10000.0, commission_rate=0.001)
+
+# 运行回测
+stats = engine.run_with_data(strategy, df, symbol='DOGEUSDT')
+
+# 生成报告
+reporter = BacktestReporter(stats, engine.get_orders(), engine.get_trades())
+print(reporter.generate_text_report())
+```
+
+### 回测入口脚本
+
+```bash
+# 双均线策略回测
+python backtest/ma_backtest.py
+
+# 利费莫尔策略回测
+python backtest/lifemore_backtest.py
+
+# 海龟策略回测
+python backtest/turtle_backtest.py
+```
 
 ### 测试数据要求
 
@@ -261,9 +344,9 @@ sellStrategy1 = {"profit": 1.05, "sell": 0.1}  # 盈利5%时卖出10%仓位
 
 1. 申请 Binance API Key
 2. 注册钉钉自定义机器人获取 Webhook
-3. 修改 `app/authorization.py` 配置密钥
-4. 修改 `runtime_config.py` 配置策略参数
-5. 运行 `python main.py`
+3. 修改 `config.yaml` 配置密钥和策略参数
+4. 运行 `python scripts/load_kline.py` 加载K线数据
+5. 运行 `python main.py` 启动交易
 
 ---
 
@@ -271,9 +354,8 @@ sellStrategy1 = {"profit": 1.05, "sell": 0.1}  # 盈利5%时卖出10%仓位
 
 ### 文档命名
 
-- 设计文档：`docs/design/{模块名称}-设计文档.md`
-- 需求文档：`docs/requirements/{模块名称}-需求文档.md`
-- 测试文档：`docs/test/{模块名称}-测试文档.md`
+- 设计文档：`docs/plans/YYYY-MM-DD-{模块名称}-design.md`
+- 实现计划：`docs/plans/YYYY-MM-DD-{模块名称}-implementation-plan.md`
 
 ### 代码注释
 
@@ -294,66 +376,62 @@ binance:
   api_key: ""           # 币安API密钥
   api_secret: ""        # 币安API私钥
   recv_window: 5000     # 请求超时时间
-  proxy:                # 代理配置
+  proxy:
     enabled: false      # 是否开启代理（默认关闭）
     host: "127.0.0.1"
     port: 7890
 
 dingding:
   enabled: true        # 是否开启钉钉通知
-  token: ""            # 钉钉群Token（告警）
-  token2: ""           # 钉钉群Token（交易）
+  token: ""            # 钉钉群Token
 
-notifier:
-  enabled: true
-  provider: "dingding"  # dingding | weixin
-
-weixin:
-  enabled: false
-  corp_id: ""
-  secret: ""
-  agent_id: 0
-  to_user: "@all"
+strategy:
+  enabled_strategies:  # 启用的策略列表
+    - "ma"
+    - "livermore"
+    - "turtle"
+  weights:             # 策略权重
+    ma: 1.0
+    livermore: 1.0
+    turtle: 1.0
+  threshold: 0.5       # 信号合成阈值
+  ma:
+    short_period: 5
+    long_period: 60
+  livermore:
+    breakout_period: 30
+    pyramid_ratio: 0.05
+    stop_loss_ratio: 0.10
+  turtle:
+    entry_period: 20
+    exit_period: 10
+    atr_period: 20
+    risk_ratio: 0.02
+    max_units: 4
 
 trade:
-  strategy:
-    ma:
-      short_period: 5               # 短周期均线
-      long_period: 60              # 长周期均线
-  kLine_type: '15m'     # K线周期
+  kLine_type: '15m'
   binance_market: "SPOT"
   binance_coinBase: "USDT"
   binance_coinBase_count: 20
   binance_tradeCoin: "DOGE"
-  isOpenSellStrategy: true
-  sellStrategy1: {"profit": 1.05, "sell": 0.1}
-  sellStrategy2: {"profit": 1.10, "sell": 0.2}
-  sellStrategy3: {"profit": 1.20, "sell": 0.2}
 
 sqlite:
-  enabled: false        # 是否从SQLite加载配置
+  enabled: true
   db_path: "/data/db/smart_quant_robot.db"
+
+backtest:
+  enabled: true
+  initial_capital: 10000.0
+  commission_rate: 0.001
+  data_limit: 1000
 ```
 
 ### 8.2 配置加载优先级
 
 1. **SQLite数据库**（如果 enabled=true 且有数据）> **config.yaml** > **默认值**
 
-### 8.3 SQLite配置存储
-
-创建数据库表 `binance_config`：
-
-```sql
-CREATE TABLE IF NOT EXISTS `binance_config` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `api_key` VARCHAR(256) NOT NULL,
-  `api_secret` VARCHAR(256) NOT NULL,
-  `enabled` TINYINT DEFAULT 1,
-  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### 8.4 配置访问方式
+### 8.3 配置访问方式
 
 使用全局配置单例：
 
@@ -369,7 +447,7 @@ short_period = ma_config.get('short_period', 5)  # 带默认值
 ma_config.set('short_period', 10)
 ```
 
-### 8.5 禁止硬编码
+### 8.4 禁止硬编码
 
 - 所有配置必须通过 `config.get()` 获取
 - 禁止在代码中硬编码 API 密钥、token 等敏感信息
