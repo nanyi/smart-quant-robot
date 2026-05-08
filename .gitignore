@@ -47,6 +47,7 @@ doc/
 migrations/
 AI.txt
 /data/db/
+/backtest/report/
 # ===== IDE / Editor =====
 .idea/
 .vscode/

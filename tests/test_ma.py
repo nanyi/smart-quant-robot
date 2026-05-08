@@ -64,6 +64,10 @@ def generate_unique_filename(base_path):
             return new_path
 
 def save_backtest_data(df, strategy, engine, stats):
+    # 确保输出目录存在
+    output_dir = "./backtest/report"
+    os.makedirs(output_dir, exist_ok=True)
+    
     #  保存报告
     reporter = BacktestReporter(stats, engine.get_orders(), engine.get_trades())
     reporter_text = reporter.generate_text_report()
