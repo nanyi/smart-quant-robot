@@ -257,7 +257,18 @@ print(reporter.generate_text_report())
 ```python
 from backtest import BacktestEngine, BacktestReporter
 from strategy import CompositeStrategy, MAStrategy, LivermoreStrategy
+from app.services import KlineService
+from db.kline_data import KlineData
 
+# 创建K线服务
+kline_service = KlineService()
+
+# 从数据库加载K线数据
+klines = kline_service.get_from_db('DOGEUSDT', '15m', limit=1000)
+
+# 转换为DataFrame
+df = KlineData.to_dataframe(klines)
+    
 # 创建策略组合
 strategies = [
     MAStrategy(short_period=5, long_period=60),
