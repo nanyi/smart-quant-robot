@@ -117,7 +117,7 @@ def save_backtest_data(df, strategy, engine, stats):
             'symbol': pos.symbol,
             'side': pos.side.value,
             'quantity': pos.quantity,
-            'entry_price': pos.entry_price,
+            'avg_entry_price': pos.avg_entry_price,
             'current_price': pos.current_price,
             'unrealized_pnl': pos.unrealized_pnl
         } for pos in positions_dict.values()])

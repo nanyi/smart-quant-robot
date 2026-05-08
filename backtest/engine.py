@@ -103,6 +103,7 @@ class BacktestEngine:
             current_bar = df.iloc[idx]
             current_price = current_bar["closePrice"]
             current_time = current_bar["openTime"]
+            current_time = current_time if isinstance(current_time, datetime) else pd.to_datetime(current_time, unit="ms")
 
             self._check_and_fill_orders(current_price, current_time)
 
