@@ -78,34 +78,13 @@ def save_backtest_data(df, strategy, engine, stats):
     df.to_excel(generate_unique_filename("./backtest/report/backtest_data.xlsx"), index=False)
 
     # 保存订单数据到excel表
-    orders_df = pd.DataFrame([{
-        'order_id': order.order_id,
-        'symbol': order.symbol,
-        'side': order.side.value,
-        'order_type': order.order_type.value,
-        'price': order.price,
-        'quantity': order.quantity,
-        'filled_quantity': order.filled_quantity,
-        'status': order.status.value,
-        'create_time': order.create_time,
-        'update_time': order.update_time
-    } for order in engine.get_orders()])
+    orders_df = pd.DataFrame([order.to_dataFrame() for order in engine.get_orders()])
     
     if not orders_df.empty:
         orders_df.to_excel(generate_unique_filename("./backtest/report/backtest_orders.xlsx"), index=False)
 
     #  保存交易数据
-    trades_df = pd.DataFrame([{
-        'trade_id': trade.trade_id,
-        'order_id': trade.order_id,
-        'symbol': trade.symbol,
-        'side': trade.side.value,
-        'price': trade.price,
-        'quantity': trade.quantity,
-        'turnover': trade.turnover,
-        'commission': trade.commission,
-        'trade_time': trade.trade_time
-    } for trade in engine.get_trades()])
+    trades_df = pd.DataFrame([trade.to_dataFrame() for trade in engine.get_trades()])
     
     if not trades_df.empty:
         trades_df.to_excel(generate_unique_filename("./backtest/report/backtest_trades.xlsx"), index=False)
@@ -113,14 +92,7 @@ def save_backtest_data(df, strategy, engine, stats):
     # 保存仓位数据
     positions_dict = engine.get_positions()
     if positions_dict:
-        positions_df = pd.DataFrame([{
-            'symbol': pos.symbol,
-            'side': pos.side.value,
-            'quantity': pos.quantity,
-            'avg_entry_price': pos.avg_entry_price,
-            'current_price': pos.current_price,
-            'unrealized_pnl': pos.unrealized_pnl
-        } for pos in positions_dict.values()])
+        positions_df = pd.DataFrame([pos.to_dataFrame() for pos in positions_dict.values()])
         
         positions_df.to_excel(generate_unique_filename("./backtest/report/backtest_positions.xlsx"), index=False)
 

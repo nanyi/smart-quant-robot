@@ -159,7 +159,7 @@ class BacktestEngine:
                 position = self.positions[order.symbol]
                 pnl = (fill_price - position.avg_entry_price) * order.quantity - commission
                 pnl_ratio = pnl / (position.avg_entry_price * order.quantity)
-                hold_seconds = int((fill_time - position.open_time).total_seconds() * 1000) if position.open_time else 0
+                hold_seconds = int((fill_time - position.open_time).total_seconds()) if position.open_time else 0
 
                 record = PositionRecord(
                     symbol=order.symbol,
