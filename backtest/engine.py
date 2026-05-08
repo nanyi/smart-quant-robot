@@ -106,7 +106,9 @@ class BacktestEngine:
             # 检查订单
             self._check_and_fill_orders(current_price, current_time)
 
-            signal = strategy.calculate(df[:idx + 1], idx)
+            # 获取idx处及之前的K线数据
+            before_df = df[:idx + 1]
+            signal = strategy.calculate(before_df, idx)
             if signal and signal.signal_type == SignalType.BUY:
                 self._execute_buy(symbol, current_price, current_time, signal.weight)
             elif signal and signal.signal_type == SignalType.SELL:

@@ -1,14 +1,14 @@
 import os
 import re
 import unittest
-import pandas as pd
+from datetime import timedelta
+
 import numpy as np
-from datetime import datetime, timedelta
-import openpyxl
+import pandas as pd
 
 from backtest import BacktestReporter
-from strategy.ma import MAStrategy
 from strategy.base import SignalType
+from strategy.ma import MAStrategy
 
 
 def generate_test_data(days=365, start_price=100):
@@ -125,7 +125,9 @@ class MyTestCase(unittest.TestCase):
 
         signals = []
         for idx in range(len(df)):
-            signal = strategy.calculate(df, idx)
+            # 获取idx处及之前的K线数据
+            before_df = df[:idx + 1]
+            signal = strategy.calculate(before_df, idx)
             if signal:
                 signals.append((idx, signal))
                 print(f"索引 {idx} | 时间: {signal.time} | "
@@ -171,7 +173,9 @@ class MyTestCase(unittest.TestCase):
 
         signals = []
         for idx in range(len(df)):
-            signal = strategy.calculate(df, idx)
+            # 获取idx处及之前的K线数据
+            before_df = df[:idx + 1]
+            signal = strategy.calculate(before_df, idx)
             if signal:
                 signals.append(signal)
 
@@ -214,7 +218,9 @@ class MyTestCase(unittest.TestCase):
             signal_count = 0
 
             for idx in range(len(df)):
-                if strategy.calculate(df, idx):
+                # 获取idx处及之前的K线数据
+                before_df = df[:idx + 1]
+                if strategy.calculate(before_df, idx):
                     signal_count += 1
 
             print(f"MA({short_period}, {long_period}): 生成 {signal_count} 个信号")
