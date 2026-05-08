@@ -10,10 +10,10 @@ class LivermoreStrategy(SignalStrategy):
     """利费莫尔交易法则（Livermore Trading System）
     
     核心要素：
-    - 入场：突破历史高低点
-    - 加仓：金字塔型，5%-10%间隔
-    - 止损：移动止损，最高点回落10%
-    - 出场：分批平仓
+    - 入场：价格突破历史高点买入，跌破历史低点卖出
+    - 加仓：金字塔型，每次加仓价格比上次高5%以上
+    - 止损：移动止损，从最高点回落10%时止损
+    - 出场：价格跌破历史低点时全部平仓
     """
 
     def __init__(
@@ -21,23 +21,20 @@ class LivermoreStrategy(SignalStrategy):
             breakout_period: int = 30,
             pyramid_ratio: float = 0.05,
             stop_loss_ratio: float = 0.10,
-            exit_ratio: float = 0.20,
+            max_position: int = 4,
     ):
         """初始化利费莫尔交易策略
         
-        基于杰西·利费莫尔的交易理念：关键点突破、金字塔加仓、严格止损
-        
-        :param breakout_period: 突破周期（关键价格区间），默认30
+        :param breakout_period: 突破周期（历史高低点区间），默认30
         :param pyramid_ratio: 金字塔加仓比例（价格每上涨多少比例加仓），默认0.05
-        :param stop_loss_ratio: 止损比例，默认0.10
-        :param exit_ratio: 出场回撤比例，默认0.20
+        :param stop_loss_ratio: 止损比例（从最高点回落比例），默认0.10
+        :param max_position: 最大持仓手数，默认4
         """
         self.breakout_period = breakout_period
         self.pyramid_ratio = pyramid_ratio
         self.stop_loss_ratio = stop_loss_ratio
-        self.exit_ratio = exit_ratio
+        self.max_position = max_position
 
-        # 持仓状态跟踪变量
         self.highest_price = 0.0
         self.position_count = 0
         self.last_add_price = 0.0
@@ -59,8 +56,8 @@ class LivermoreStrategy(SignalStrategy):
         current_price = current_bar['closePrice']
         current_time = current_bar['closeTime']
 
-        period_high = df['closePrice'].iloc[- self.breakout_period - 1:-1].max()
-        period_low = df['closePrice'].iloc[- self.breakout_period - 1:-1].min()
+        period_high = df['highPrice'].iloc[-self.breakout_period - 1:-1].max()
+        period_low = df['lowPrice'].iloc[-self.breakout_period - 1:-1].min()
 
         if self.position_count == 0:
             self.highest_price = 0.0
@@ -98,9 +95,9 @@ class LivermoreStrategy(SignalStrategy):
         elif self.position_count > 0:
             if current_price > self.highest_price:
                 self.highest_price = current_price
-                self.last_add_price = current_price
 
-            if current_price < self.highest_price * (1 - self.stop_loss_ratio):
+            stop_loss_price = self.highest_price * (1 - self.stop_loss_ratio)
+            if current_price < stop_loss_price:
                 self.position_count = 0
                 return Signal(
                     signal_type=SignalType.SELL,
@@ -112,9 +109,9 @@ class LivermoreStrategy(SignalStrategy):
                 )
 
             add_price = self.last_add_price * (1 + self.pyramid_ratio)
-            if current_price >= add_price and self.position_count < 4:
+            if current_price >= add_price and self.position_count < self.max_position:
                 self.position_count += 1
-                self.last_add_price = add_price
+                self.last_add_price = current_price
                 return Signal(
                     signal_type=SignalType.BUY,
                     strategy_name=self.name,
@@ -137,9 +134,9 @@ class LivermoreStrategy(SignalStrategy):
         else:
             if current_price < self.highest_price:
                 self.highest_price = current_price
-                self.last_add_price = current_price
 
-            if current_price > self.highest_price * (1 + self.stop_loss_ratio):
+            stop_loss_price = self.highest_price * (1 + self.stop_loss_ratio)
+            if current_price > stop_loss_price:
                 self.position_count = 0
                 return Signal(
                     signal_type=SignalType.BUY,
@@ -151,9 +148,9 @@ class LivermoreStrategy(SignalStrategy):
                 )
 
             add_price = self.last_add_price * (1 - self.pyramid_ratio)
-            if current_price <= add_price and self.position_count > -4:
+            if current_price <= add_price and self.position_count > -self.max_position:
                 self.position_count -= 1
-                self.last_add_price = add_price
+                self.last_add_price = current_price
                 return Signal(
                     signal_type=SignalType.SELL,
                     strategy_name=self.name,

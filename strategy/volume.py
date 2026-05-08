@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Optional
+
 import pandas as pd
-import time as time_module
 
 from strategy.base import SignalStrategy, Signal, SignalType
 

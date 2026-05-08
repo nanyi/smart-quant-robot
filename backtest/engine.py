@@ -56,15 +56,16 @@ class BacktestEngine:
             return pd.DataFrame()
 
         data = {
-            "open_time": [k.open_time for k in klines],
-            "open": [k.open_price for k in klines],
-            "high": [k.high_price for k in klines],
-            "low": [k.low_price for k in klines],
-            "close": [k.close_price for k in klines],
+            "openTime": [k.open_time for k in klines],
+            "closeTime": [k.close_time for k in klines],
+            "closePrice": [k.close_price for k in klines],
+            "openPrice": [k.open_price for k in klines],
+            "highPrice": [k.high_price for k in klines],
+            "lowPrice": [k.low_price for k in klines],
             "volume": [k.volume for k in klines],
         }
         df = pd.DataFrame(data)
-        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+        df["openTime"] = pd.to_datetime(df["openTime"], unit="ms")
         return df
 
     def load_data_from_list(self, klines: List[KlineData]) -> pd.DataFrame:
@@ -72,15 +73,16 @@ class BacktestEngine:
             return pd.DataFrame()
 
         data = {
-            "open_time": [k.open_time for k in klines],
-            "open": [k.open_price for k in klines],
-            "high": [k.high_price for k in klines],
-            "low": [k.low_price for k in klines],
-            "close": [k.close_price for k in klines],
+            "openTime": [k.open_time for k in klines],
+            "closeTime": [k.close_time for k in klines],
+            "closePrice": [k.close_price for k in klines],
+            "openPrice": [k.open_price for k in klines],
+            "highPrice": [k.high_price for k in klines],
+            "lowPrice": [k.low_price for k in klines],
             "volume": [k.volume for k in klines],
         }
         df = pd.DataFrame(data)
-        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+        df["openTime"] = pd.to_datetime(df["openTime"], unit="ms")
         return df
 
     def run(

@@ -11,10 +11,10 @@ class TurtleStrategy(SignalStrategy):
     """海龟交易法则（Turtle Trading System）
     
     核心要素：
-    - 入场：突破N日最高/最低点
-    - 加仓：价格突破0.5N时加仓1个单位
-    - 止损：价格跌破买入价-2N时止损
-    - 出场：跌破N日最低点
+    - 入场：收盘价突破N日最高买入，跌破N日最低卖出
+    - 加仓：收盘价突破上次加仓价格+0.5ATR时加仓
+    - 止损：基于ATR的移动止损（入场价-2N）
+    - 出场：收盘价跌破N日最低价
     """
 
     def __init__(
@@ -25,6 +25,14 @@ class TurtleStrategy(SignalStrategy):
             risk_ratio: float = 0.02,
             max_units: int = 4,
     ):
+        """初始化海龟交易策略
+        
+        :param entry_period: 入场唐奇安通道周期（历史高低点区间），默认20
+        :param exit_period: 出场唐奇安通道周期，默认10
+        :param atr_period: ATR计算周期，默认20
+        :param risk_ratio: 单笔风险比例（用于计算仓位），默认0.02
+        :param max_units: 最大持仓单位数，默认4
+        """
         self.entry_period = entry_period
         self.exit_period = exit_period
         self.atr_period = atr_period
@@ -53,39 +61,34 @@ class TurtleStrategy(SignalStrategy):
         current_bar = df.iloc[-1]
         current_price = current_bar['closePrice']
         current_time = current_bar['closeTime']
-        high_price = current_bar['highPrice']
-        low_price = current_bar['lowPrice']
 
-        entry_high = df['highPrice'].iloc[-self.entry_period - 1:-1].max()
-        entry_low = df['lowPrice'].iloc[-self.entry_period - 1:-1].min()
-        exit_high = df['highPrice'].iloc[-self.exit_period - 1:-1].max()
-        exit_low = df['lowPrice'].iloc[-self.exit_period - 1:-1].min()
+        entry_high = df['highPrice'].iloc[-self.entry_period:-1].max()
+        entry_low = df['lowPrice'].iloc[-self.entry_period:-1].min()
+        exit_high = df['highPrice'].iloc[-self.exit_period:-1].max()
+        exit_low = df['lowPrice'].iloc[-self.exit_period:-1].min()
 
-        prev_bar = df.iloc[-2]
-        tr1 = prev_bar['highPrice'] - prev_bar['lowPrice']
-        tr2 = abs(prev_bar['highPrice'] - df.iloc[-3]['closePrice'])
-        tr3 = abs(prev_bar['lowPrice'] - df.iloc[-3]['closePrice'])
-        current_tr = max(tr1, tr2, tr3)
-
-        if len(df) >= self.atr_period:
-            atr_values = []
-            for i in range(len(df) - self.atr_period - 1, len(df) - 1):
-                bar = df.iloc[i]
-                prev_bar = df.iloc[i - 1]
-                tr1 = bar['highPrice'] - bar['lowPrice']
-                tr2 = abs(bar['highPrice'] - prev_bar['closePrice'])
-                tr3 = abs(bar['lowPrice'] - prev_bar['closePrice'])
-                atr_values.append(max(tr1, tr2, tr3))
+        atr_values = []
+        for i in range(len(df) - self.atr_period, len(df) - 1):
+            if i < 1:
+                continue
+            bar = df.iloc[i]
+            prev_close = df.iloc[i - 1]['closePrice']
+            tr1 = bar['highPrice'] - bar['lowPrice']
+            tr2 = abs(bar['highPrice'] - prev_close)
+            tr3 = abs(bar['lowPrice'] - prev_close)
+            atr_values.append(max(tr1, tr2, tr3))
+        
+        if atr_values:
             self.n_value = np.mean(atr_values)
         else:
-            self.n_value = current_tr
+            self.n_value = current_bar['highPrice'] - current_bar['lowPrice']
 
         if self.position_units == 0:
             self.entry_price = 0.0
             self.stop_loss_price = 0.0
             self.last_add_price = 0.0
 
-            if high_price > entry_high and self.n_value > 0:
+            if current_price > entry_high and self.n_value > 0:
                 self.position_units = 1
                 self.entry_price = current_price
                 self.stop_loss_price = current_price - 2 * self.n_value
@@ -99,7 +102,7 @@ class TurtleStrategy(SignalStrategy):
                     time=str(pd.to_datetime(current_time, unit='ms')),
                     confidence=1.0
                 )
-            elif low_price < entry_low and self.n_value > 0:
+            elif current_price < entry_low and self.n_value > 0:
                 self.position_units = -1
                 self.entry_price = current_price
                 self.stop_loss_price = current_price + 2 * self.n_value
@@ -125,7 +128,7 @@ class TurtleStrategy(SignalStrategy):
                     confidence=1.0
                 )
 
-            if low_price < exit_low:
+            if current_price < exit_low:
                 self.position_units = 0
                 return Signal(
                     signal_type=SignalType.SELL,
@@ -137,9 +140,10 @@ class TurtleStrategy(SignalStrategy):
                 )
 
             add_price = self.last_add_price + 0.5 * self.n_value
-            if high_price > add_price and self.position_units < self.max_units:
+            if current_price >= add_price and self.position_units < self.max_units:
                 self.position_units += 1
-                self.last_add_price = add_price
+                self.last_add_price = current_price
+                self.stop_loss_price = current_price - 2 * self.n_value
                 return Signal(
                     signal_type=SignalType.BUY,
                     strategy_name=self.name,
@@ -160,7 +164,7 @@ class TurtleStrategy(SignalStrategy):
                     confidence=1.0
                 )
 
-            if high_price > exit_high:
+            if current_price > exit_high:
                 self.position_units = 0
                 return Signal(
                     signal_type=SignalType.BUY,
@@ -172,9 +176,10 @@ class TurtleStrategy(SignalStrategy):
                 )
 
             add_price = self.last_add_price - 0.5 * self.n_value
-            if low_price < add_price and self.position_units > -self.max_units:
+            if current_price <= add_price and self.position_units > -self.max_units:
                 self.position_units -= 1
-                self.last_add_price = add_price
+                self.last_add_price = current_price
+                self.stop_loss_price = current_price + 2 * self.n_value
                 return Signal(
                     signal_type=SignalType.SELL,
                     strategy_name=self.name,
