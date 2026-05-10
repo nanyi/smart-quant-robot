@@ -249,31 +249,38 @@ class BacktestEngine:
 
         total_profit = 0.0
         total_loss = 0.0
-        peak_capital = self.initial_capital
-        max_drawdown = 0.0
+        winning_trades = 0
+        losing_trades = 0
 
         for record in self.stats.position_records:
             if record.pnl > 0:
                 total_profit += record.pnl
+                winning_trades += 1
             else:
                 total_loss += abs(record.pnl)
+                losing_trades += 1
 
         realized_pnl = total_profit - total_loss
         unrealized_pnl = sum(p.unrealized_pnl for p in self.positions.values())
         current_capital = self.current_capital + unrealized_pnl
 
+        peak_capital = self.initial_capital
+        max_drawdown = 0.0
+        for capital in [self.initial_capital, current_capital]:
+            if capital > peak_capital:
+                peak_capital = capital
+            drawdown = peak_capital - capital
+            if drawdown > max_drawdown:
+                max_drawdown = drawdown
+
         capital_curve = [self.initial_capital, current_capital]
 
-        if current_capital > peak_capital:
-            peak_capital = current_capital
-        drawdown = peak_capital - current_capital
-        if drawdown > max_drawdown:
-            max_drawdown = drawdown
-
+        self.stats.capital_curve = capital_curve
+        self.stats.realized_pnl = realized_pnl
         self.stats.total_profit = total_profit
         self.stats.total_loss = total_loss
-        self.stats.winning_trades = len([r for r in self.stats.position_records if r.pnl > 0])
-        self.stats.losing_trades = len([r for r in self.stats.position_records if r.pnl <= 0])
+        self.stats.winning_trades = winning_trades
+        self.stats.losing_trades = losing_trades
         self.stats.max_drawdown = max_drawdown
         self.stats.calculate()
 

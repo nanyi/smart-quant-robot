@@ -175,6 +175,9 @@ class BacktestStats:
     win_rate: float = 0
     profit_factor: float = 0
     sharpe_ratio: float = 0
+    realized_pnl: float = 0
+    unrealized_pnl: float = 0
+    capital_curve: List[float] = field(default_factory=list)
     position_records: List[PositionRecord] = field(default_factory=list)
     current_positions: Dict[str, BacktestPosition] = field(default_factory=dict)
 

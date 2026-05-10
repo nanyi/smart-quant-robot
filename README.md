@@ -109,6 +109,16 @@ python3.7+
 pip install -r requirements.txt
 ```
 
+由于交易所的api在大陆无法访问，需要科学上网，若无，可用[泰山]。https://github.com/nanyi/duangcloud
+
+泰山邀请码：OxCJV3VZ
+
+最新地址1：[https://hk.taishan.pro](https://hk.taishan.pro/#/register?code=OxCJV3VZ)
+
+最新地址2：[https://jp.taishan.pro](https://jp.taishan.pro/#/register?code=OxCJV3VZ)
+
+最新地址3：[https://ru.taishan.pro](https://ru.taishan.pro/#/register?code=OxCJV3VZ)
+
 ### 2、获取币安API的 api_key 和 api_secret
 
 申请api_key地址:

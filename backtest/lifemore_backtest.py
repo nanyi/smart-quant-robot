@@ -16,7 +16,7 @@ if __name__ == '__main__':
         breakout_period=30,
         pyramid_ratio=0.05,
         stop_loss_ratio=0.10,
-        exit_ratio=0.20,
+        max_position=4,
     )
 
     engine = BacktestEngine(initial_capital=10000.0)

@@ -21,6 +21,9 @@ class BacktestReporter:
         lines.append("=" * 60)
         lines.append("")
 
+        realized_pnl = self.stats.total_profit - self.stats.total_loss
+        unrealized_pnl = sum(pos.unrealized_pnl for pos in self.stats.current_positions.values()) if self.stats.current_positions else 0.0
+
         lines.append("【账户信息】")
         lines.append(f"  初始资金: {self.stats.initial_capital:.2f} USDT")
         lines.append(f"  最终资金: {self.stats.final_capital:.2f} USDT")
@@ -28,6 +31,8 @@ class BacktestReporter:
         lines.append(f"  持仓市值: {self.stats.position_value:.2f} USDT")
         lines.append(f"  总收益: {self.stats.final_capital - self.stats.initial_capital:.2f} USDT")
         lines.append(f"  收益率: {(self.stats.final_capital / self.stats.initial_capital - 1) * 100:.2f}%")
+        lines.append(f"  已实现盈亏: {realized_pnl:+.2f} USDT")
+        lines.append(f"  未实现盈亏: {unrealized_pnl:+.2f} USDT")
         lines.append("")
 
         if self.stats.current_positions:
@@ -68,6 +73,7 @@ class BacktestReporter:
         lines.append("【收益统计】")
         lines.append(f"  总盈利: {self.stats.total_profit:.2f} USDT")
         lines.append(f"  总亏损: {self.stats.total_loss:.2f} USDT")
+        lines.append(f"  已实现盈亏: {realized_pnl:+.2f} USDT")
         lines.append(f"  盈利因子: {self.stats.profit_factor:.2f}")
         lines.append("")
 
