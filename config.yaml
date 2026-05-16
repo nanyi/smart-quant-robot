@@ -54,6 +54,7 @@ strategy:
     - "volume"
     - "lifemore"
     - "turtle"
+    - "nbreak"
   weights:
     ma: 1.0
     rsi: 0.8
@@ -63,6 +64,7 @@ strategy:
     volume: 0.7
     lifemore: 1.0
     turtle: 1.0
+    nbreak: 1.0
   threshold: 0.5
   ma:
     short_period: 5
@@ -78,6 +80,17 @@ strategy:
     atr_period: 20
     risk_ratio: 0.02
     max_units: 4
+  nbreak:
+    ma_period: 20
+    strong_rise_period: 10
+    strong_rise_min_count: 3
+    strong_rise_min_gain: 0.03
+    volume_amplify_ratio: 1.5
+    pullback_volume_ratio: 0.7
+    breakout_volume_ratio: 1.2
+    breakout_threshold: 0.01
+    atr_period: 20
+    atr_stop_loss_ratio: 2.0
 
 backtest:
   enabled: true
