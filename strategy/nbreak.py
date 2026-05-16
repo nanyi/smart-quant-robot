@@ -23,7 +23,7 @@ class NBreakStrategy(SignalStrategy):
             ma_period: int = 20,
             strong_rise_period: int = 10,
             strong_rise_min_count: int = 3,
-            strong_rise_min_gain: float = 0.03,
+            strong_rise_body_ratio: float = 1.5,
             volume_amplify_ratio: float = 1.5,
             pullback_volume_ratio: float = 0.7,
             breakout_volume_ratio: float = 1.2,
@@ -36,7 +36,7 @@ class NBreakStrategy(SignalStrategy):
         :param ma_period: 均线周期，默认20
         :param strong_rise_period: 强势拉升段K线数量，默认10
         :param strong_rise_min_count: 强势拉升段最小阳线数，默认3
-        :param strong_rise_min_gain: 强势拉升段最小涨幅，默认3%
+        :param strong_rise_body_ratio: 拉升段最小平均K线实体/ATR比率，默认1.5
         :param volume_amplify_ratio: 成交量放大倍数，默认1.5
         :param pullback_volume_ratio: 缩量回踩比例，默认0.7
         :param breakout_volume_ratio: 放量突破比例，默认1.2
@@ -47,7 +47,7 @@ class NBreakStrategy(SignalStrategy):
         self.ma_period = ma_period
         self.strong_rise_period = strong_rise_period
         self.strong_rise_min_count = strong_rise_min_count
-        self.strong_rise_min_gain = strong_rise_min_gain
+        self.strong_rise_body_ratio = strong_rise_body_ratio
         self.volume_amplify_ratio = volume_amplify_ratio
         self.pullback_volume_ratio = pullback_volume_ratio
         self.breakout_volume_ratio = breakout_volume_ratio
@@ -110,7 +110,7 @@ class NBreakStrategy(SignalStrategy):
             self.n_value = current_high - current_low
 
         if not self.position_opened:
-            self._detect_n_pattern(df, current_price, ma, volume_ma5, current_high)
+            self._detect_n_pattern(df, current_price, ma, volume_ma5, current_volume, current_high)
 
             if self._in_pullback_phase and current_price > current_high * (1 - self.breakout_threshold):
                 if current_volume >= volume_ma5 * self.breakout_volume_ratio:
@@ -168,8 +168,7 @@ class NBreakStrategy(SignalStrategy):
 
         return None
 
-    def _detect_n_pattern(self, df, current_price, ma, volume_ma5, current_high):
-        current_volume = df.iloc[-1]['volume']
+    def _detect_n_pattern(self, df, current_price, ma, volume_ma5, current_volume, current_high):
         
         if self._in_rise_phase:
             if current_price < df['closePrice'].iloc[-2]:
@@ -179,13 +178,17 @@ class NBreakStrategy(SignalStrategy):
         else:
             rise_bars = df.iloc[-self.strong_rise_period - 1:-1]
             rise_count = 0
+            total_body = 0.0
             volume_amplified = False
 
             for i in range(len(rise_bars) - 1):
                 bar = rise_bars.iloc[i]
-                gain = (bar['closePrice'] - bar['openPrice']) / bar['openPrice']
-                if gain >= self.strong_rise_min_gain:
+                body = bar['closePrice'] - bar['openPrice']
+                if body > 0:
+                    total_body += body
                     rise_count += 1
+
+            avg_body = total_body / rise_count if rise_count > 0 else 0.0
 
             if len(df) >= 6:
                 prev_volume_ma5 = df['volume'].iloc[-self.strong_rise_period - 6:-self.strong_rise_period - 1].mean()
@@ -194,7 +197,7 @@ class NBreakStrategy(SignalStrategy):
                     if recent_volume_ma >= prev_volume_ma5 * self.volume_amplify_ratio:
                         volume_amplified = True
 
-            if rise_count >= self.strong_rise_min_count and volume_amplified:
+            if rise_count >= self.strong_rise_min_count and volume_amplified and avg_body >= self.n_value * self.strong_rise_body_ratio:
                 if current_price > ma:
                     self._in_rise_phase = True
 

@@ -84,7 +84,7 @@ strategy:
     ma_period: 20
     strong_rise_period: 10
     strong_rise_min_count: 3
-    strong_rise_min_gain: 0.03
+    strong_rise_body_ratio: 1.5
     volume_amplify_ratio: 1.5
     pullback_volume_ratio: 0.7
     breakout_volume_ratio: 1.2
