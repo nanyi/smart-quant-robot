@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
+import random
 from datetime import timedelta
 
 import numpy as np
@@ -17,8 +18,9 @@ class BaseStrategyTestCase(unittest.TestCase):
         :param start_price: 起始价格
         :return: DataFrame格式的K线数据
         """
-        dates = pd.date_range(start='2026-01-01', periods=days, freq='D')
+        dates = list(pd.date_range(start='2026-01-01', periods=days, freq='D'))
 
+        random.seed(42)
         np.random.seed(42)
         prices = [start_price]
         for _ in range(days - 1):
@@ -26,14 +28,22 @@ class BaseStrategyTestCase(unittest.TestCase):
             new_price = prices[-1] * (1 + change)
             prices.append(max(new_price, 1))
 
+        open_prices = [p * (1 + np.random.normal(0, 0.01)) for p in prices]
+        high_prices = [p * (1 + abs(np.random.normal(0, 0.02))) for p in prices]
+        low_prices = [p * (1 - abs(np.random.normal(0, 0.02))) for p in prices]
+        volumes = [random.randint(1000, 10000) for _ in range(days)]
+
+        open_times = [int(d.timestamp() * 1000) for d in dates]
+        close_times = [int((d + timedelta(hours=23, minutes=59)).timestamp() * 1000) for d in dates]
+
         df = pd.DataFrame({
-            'openTime': [int(d.timestamp() * 1000) for d in dates],
-            'closeTime': [int((d + timedelta(hours=23, minutes=59)).timestamp() * 1000) for d in dates],
+            'openTime': open_times,
+            'closeTime': close_times,
             'closePrice': prices,
-            'openPrice': [p * (1 + np.random.normal(0, 0.01)) for p in prices],
-            'highPrice': [p * (1 + abs(np.random.normal(0, 0.02))) for p in prices],
-            'lowPrice': [p * (1 - abs(np.random.normal(0, 0.02))) for p in prices],
-            'volume': np.random.randint(1000, 10000, days)
+            'openPrice': open_prices,
+            'highPrice': high_prices,
+            'lowPrice': low_prices,
+            'volume': volumes
         })
 
         print(f"生成数据行数: {len(df)}")
