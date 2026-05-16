@@ -169,6 +169,8 @@ class NBreakStrategy(SignalStrategy):
         return None
 
     def _detect_n_pattern(self, df, current_price, ma, volume_ma5, current_high):
+        current_volume = df.iloc[-1]['volume']
+        
         if self._in_rise_phase:
             if current_price < df['closePrice'].iloc[-2]:
                 self._in_rise_phase = False
