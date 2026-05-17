@@ -22,9 +22,9 @@ class NBreakStrategy(SignalStrategy):
             self,
             ma_period: int = 20,
             strong_rise_period: int = 10,
-            strong_rise_min_count: int = 3,
-            strong_rise_body_ratio: float = 1.5,
-            volume_amplify_ratio: float = 1.5,
+            strong_rise_min_count: int = 2,
+            strong_rise_body_ratio: float = 1.2,
+            volume_amplify_ratio: float = 1.2,
             pullback_volume_ratio: float = 0.7,
             breakout_volume_ratio: float = 1.2,
             breakout_threshold: float = 0.01,
@@ -64,6 +64,7 @@ class NBreakStrategy(SignalStrategy):
         self._in_rise_phase = False
         self._in_pullback_phase = False
         self._pullback_low = 0.0
+        self._pullback_high = 0.0
 
     @property
     def name(self) -> str:
@@ -112,23 +113,21 @@ class NBreakStrategy(SignalStrategy):
         if not self.position_opened:
             self._detect_n_pattern(df, current_price, ma, volume_ma5, current_volume, current_high)
 
-            if self._in_pullback_phase and current_price > current_high * (1 - self.breakout_threshold):
+            if self._in_pullback_phase and current_price > self._pullback_high * (1 + self.breakout_threshold):
                 if current_volume >= volume_ma5 * self.breakout_volume_ratio:
-                    prev_high = df['highPrice'].iloc[-2]
-                    if current_price > prev_high * (1 + self.breakout_threshold):
-                        self.position_opened = True
-                        self.entry_price = current_price
-                        self.stop_loss_price = current_price - self.atr_stop_loss_ratio * self.n_value
-                        self.take_profit_price = current_price * 1.10
+                    self.position_opened = True
+                    self.entry_price = current_price
+                    self.stop_loss_price = current_price - self.atr_stop_loss_ratio * self.n_value
+                    self.take_profit_price = current_price * 1.10
 
-                        return Signal(
-                            signal_type=SignalType.BUY,
-                            strategy_name=self.name,
-                            weight=self.weight,
-                            price=float(current_price),
-                            time=str(pd.to_datetime(current_time, unit='ms')),
-                            confidence=1.0
-                        )
+                    return Signal(
+                        signal_type=SignalType.BUY,
+                        strategy_name=self.name,
+                        weight=self.weight,
+                        price=float(current_price),
+                        time=str(pd.to_datetime(current_time, unit='ms')),
+                        confidence=1.0
+                    )
         else:
             if current_price < self.stop_loss_price:
                 self.position_opened = False
@@ -169,27 +168,39 @@ class NBreakStrategy(SignalStrategy):
         return None
 
     def _detect_n_pattern(self, df, current_price, ma, volume_ma5, current_volume, current_high):
+        """检测N字形态的拉升和回踩阶段
         
+        :param df: K线数据DataFrame
+        :param current_price: 当前收盘价
+        :param ma: 均线值
+        :param volume_ma5: 5周期成交量均值（排除当前K线）
+        :param current_volume: 当前成交量
+        :param current_high: 当前最高价
+        """
+        
+        # 处理拉升阶段转回踩阶段的逻辑
         if self._in_rise_phase:
             if current_price < df['closePrice'].iloc[-2]:
                 self._in_rise_phase = False
                 self._in_pullback_phase = True
                 self._pullback_low = df['lowPrice'].iloc[-1]
+                self._pullback_high = df['highPrice'].iloc[-self.strong_rise_period:-1].max()
         else:
+            # 检测强势拉升段：统计阳线数量、实体大小和成交量放大
             rise_bars = df.iloc[-self.strong_rise_period - 1:-1]
             rise_count = 0
             total_body = 0.0
             volume_amplified = False
 
-            for i in range(len(rise_bars) - 1):
-                bar = rise_bars.iloc[i]
-                body = bar['closePrice'] - bar['openPrice']
+            for bar in rise_bars.itertuples():
+                body = bar.closePrice - bar.openPrice
                 if body > 0:
                     total_body += body
                     rise_count += 1
 
             avg_body = total_body / rise_count if rise_count > 0 else 0.0
 
+            # 检测成交量是否放大：对比近期与前期成交量均值
             if len(df) >= 6:
                 prev_volume_ma5 = df['volume'].iloc[-self.strong_rise_period - 6:-self.strong_rise_period - 1].mean()
                 if prev_volume_ma5 > 0:
@@ -197,26 +208,27 @@ class NBreakStrategy(SignalStrategy):
                     if recent_volume_ma >= prev_volume_ma5 * self.volume_amplify_ratio:
                         volume_amplified = True
 
+            # 确认拉升段：阳线数量、成交量放大、实体大小、价格位置均满足条件
             if rise_count >= self.strong_rise_min_count and volume_amplified and avg_body >= self.n_value * self.strong_rise_body_ratio:
                 if current_price > ma:
                     self._in_rise_phase = True
 
+        # 处理回踩阶段：追踪最低点，检测退出条件
         if self._in_pullback_phase:
             if current_price < self._pullback_low:
                 self._pullback_low = current_price
 
-            if current_volume > volume_ma5 * self.pullback_volume_ratio:
-                self._in_pullback_phase = False
-                self._pullback_low = 0.0
-
+            # 跌破均线则退出回踩阶段
             if current_price < ma:
                 self._in_pullback_phase = False
                 self._pullback_low = 0.0
+                self._pullback_high = 0.0
 
     def _reset_phase_detection(self):
         self._in_rise_phase = False
         self._in_pullback_phase = False
         self._pullback_low = 0.0
+        self._pullback_high = 0.0
 
     def reset(self):
         self.entry_price = 0.0
