@@ -66,13 +66,13 @@ class KlineRepo:
 
             if start_time is not None:
                 sql += " AND open_time >= ?"
-                params.append(start_time)
+                params.append(str(start_time))
             if end_time is not None:
                 sql += " AND open_time <= ?"
-                params.append(end_time)
+                params.append(str(end_time))
 
             sql += " ORDER BY open_time ASC LIMIT ?"
-            params.append(limit)
+            params.append(str(limit))
 
             cursor.execute(sql, params)
             rows = cursor.fetchall()

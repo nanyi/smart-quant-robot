@@ -11,18 +11,18 @@
 
 ## 2. 策略参数配置
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `ma_period` | 20 | 均线周期 |
-| `strong_rise_period` | 10 | 强势拉升段K线数量 |
-| `strong_rise_min_count` | 2 | 强势拉升段最小阳线数 |
-| `strong_rise_body_ratio` | 1.2 | 拉升段平均K线实体/ATR比率 |
-| `volume_amplify_ratio` | 1.2 | 成交量放大倍数（较前期均量） |
-| `pullback_volume_ratio` | 0.7 | 缩量回踩比例 |
-| `breakout_volume_ratio` | 1.2 | 放量突破比例 |
+| 参数 | 默认值  | 说明 |
+|------|------|------|
+| `ma_period` | 20   | 均线周期 |
+| `strong_rise_period` | 10   | 强势拉升段K线数量 |
+| `strong_rise_min_count` | 3    | 强势拉升段最小阳线数 |
+| `strong_rise_body_ratio` | 1.5  | 拉升段平均K线实体/ATR比率 |
+| `volume_amplify_ratio` | 1.5  | 成交量放大倍数（较前期均量） |
+| `pullback_volume_ratio` | 0.7  | 缩量回踩比例 |
+| `breakout_volume_ratio` | 1.2  | 放量突破比例 |
 | `breakout_threshold` | 0.01 | 突破确认阈值（1%） |
-| `atr_period` | 20 | ATR计算周期 |
-| `atr_stop_loss_ratio` | 2.0 | ATR止损倍数 |
+| `atr_period` | 20   | ATR计算周期 |
+| `atr_stop_loss_ratio` | 2.0  | ATR止损倍数 |
 
 ## 3. 交易规则
 
@@ -98,9 +98,9 @@ strategy:
   nbreak:
     ma_period: 20
     strong_rise_period: 10
-    strong_rise_min_count: 2
-    strong_rise_body_ratio: 1.2
-    volume_amplify_ratio: 1.2
+    strong_rise_min_count: 3
+    strong_rise_body_ratio: 1.5
+    volume_amplify_ratio: 1.5
     pullback_volume_ratio: 0.7
     breakout_volume_ratio: 1.2
     breakout_threshold: 0.01

@@ -22,14 +22,15 @@ class NBreakStrategy(SignalStrategy):
             self,
             ma_period: int = 20,
             strong_rise_period: int = 10,
-            strong_rise_min_count: int = 2,
-            strong_rise_body_ratio: float = 1.2,
-            volume_amplify_ratio: float = 1.2,
+            strong_rise_min_count: int = 3,
+            strong_rise_body_ratio: float = 1.5,
+            volume_amplify_ratio: float = 1.5,
             pullback_volume_ratio: float = 0.7,
             breakout_volume_ratio: float = 1.2,
             breakout_threshold: float = 0.01,
             atr_period: int = 20,
             atr_stop_loss_ratio: float = 2.0,
+            breakout_check_volume_ratio: float = 1.0,
     ):
         """初始化精准N破战法策略
         
@@ -43,6 +44,7 @@ class NBreakStrategy(SignalStrategy):
         :param breakout_threshold: 突破确认阈值，默认1%
         :param atr_period: ATR计算周期，默认20
         :param atr_stop_loss_ratio: ATR止损倍数，默认2.0
+        :param breakout_check_volume_ratio: 破位出场成交量检查倍数，默认1.0
         """
         self.ma_period = ma_period
         self.strong_rise_period = strong_rise_period
@@ -54,6 +56,7 @@ class NBreakStrategy(SignalStrategy):
         self.breakout_threshold = breakout_threshold
         self.atr_period = atr_period
         self.atr_stop_loss_ratio = atr_stop_loss_ratio
+        self.breakout_check_volume_ratio = breakout_check_volume_ratio
 
         self.entry_price = 0.0
         self.stop_loss_price = 0.0
@@ -65,6 +68,8 @@ class NBreakStrategy(SignalStrategy):
         self._in_pullback_phase = False
         self._pullback_low = 0.0
         self._pullback_high = 0.0
+        self._rise_high = 0.0
+        self._pre_rise_volume_ma = 0.0
 
     @property
     def name(self) -> str:
@@ -94,25 +99,29 @@ class NBreakStrategy(SignalStrategy):
         ma = df['closePrice'].iloc[-self.ma_period:].mean()
         volume_ma5 = df['volume'].iloc[-6:-1].mean()
 
-        atr_values = []
-        for i in range(len(df) - self.atr_period, len(df) - 1):
-            if i < 1:
-                continue
-            bar = df.iloc[i]
-            prev_close = df.iloc[i - 1]['closePrice']
-            tr1 = bar['highPrice'] - bar['lowPrice']
-            tr2 = abs(bar['highPrice'] - prev_close)
-            tr3 = abs(bar['lowPrice'] - prev_close)
-            atr_values.append(max(tr1, tr2, tr3))
-
-        if atr_values:
-            self.n_value = np.mean(atr_values)
+        if len(df) >= self.atr_period + 1:
+            high_prices = df['highPrice'].values
+            low_prices = df['lowPrice'].values
+            close_prices = df['closePrice'].values
+            
+            tr_values = np.zeros(len(df) - 1)
+            for i in range(1, len(df)):
+                high_low = high_prices[i] - low_prices[i]
+                high_close = abs(high_prices[i] - close_prices[i - 1])
+                low_close = abs(low_prices[i] - close_prices[i - 1])
+                tr_values[i - 1] = max(high_low, high_close, low_close)
+            
+            first_tr_avg = np.mean(tr_values[:self.atr_period])
+            
+            atr_value = first_tr_avg
+            for i in range(self.atr_period, len(tr_values)):
+                atr_value = (atr_value * (self.atr_period - 1) + tr_values[i]) / self.atr_period
+            
+            self.n_value = atr_value
         else:
             self.n_value = current_high - current_low
 
         if not self.position_opened:
-            self._detect_n_pattern(df, current_price, ma, volume_ma5, current_volume, current_high)
-
             if self._in_pullback_phase and current_price > self._pullback_high * (1 + self.breakout_threshold):
                 if current_volume >= volume_ma5 * self.breakout_volume_ratio:
                     self.position_opened = True
@@ -128,6 +137,8 @@ class NBreakStrategy(SignalStrategy):
                         time=str(pd.to_datetime(current_time, unit='ms')),
                         confidence=1.0
                     )
+            
+            self._detect_n_pattern(df, current_price, ma, volume_ma5, current_volume, current_high)
         else:
             if current_price < self.stop_loss_price:
                 self.position_opened = False
@@ -153,7 +164,7 @@ class NBreakStrategy(SignalStrategy):
                     confidence=1.0
                 )
 
-            if current_price < ma and current_volume > volume_ma5 * self.volume_amplify_ratio:
+            if current_price < ma and current_volume > volume_ma5 * self.breakout_check_volume_ratio:
                 self.position_opened = False
                 self._reset_phase_detection()
                 return Signal(
@@ -178,19 +189,16 @@ class NBreakStrategy(SignalStrategy):
         :param current_high: 当前最高价
         """
         
-        # 处理拉升阶段转回踩阶段的逻辑
         if self._in_rise_phase:
-            if current_price < df['closePrice'].iloc[-2]:
+            if current_price < self._rise_high * 0.98:
                 self._in_rise_phase = False
                 self._in_pullback_phase = True
-                self._pullback_low = df['lowPrice'].iloc[-1]
-                self._pullback_high = df['highPrice'].iloc[-self.strong_rise_period:-1].max()
+                self._pullback_low = current_price
+                self._pullback_high = self._rise_high
         else:
-            # 检测强势拉升段：统计阳线数量、实体大小和成交量放大
             rise_bars = df.iloc[-self.strong_rise_period - 1:-1]
             rise_count = 0
             total_body = 0.0
-            volume_amplified = False
 
             for bar in rise_bars.itertuples():
                 body = bar.closePrice - bar.openPrice
@@ -200,35 +208,53 @@ class NBreakStrategy(SignalStrategy):
 
             avg_body = total_body / rise_count if rise_count > 0 else 0.0
 
-            # 检测成交量是否放大：对比近期与前期成交量均值
-            if len(df) >= 6:
-                prev_volume_ma5 = df['volume'].iloc[-self.strong_rise_period - 6:-self.strong_rise_period - 1].mean()
-                if prev_volume_ma5 > 0:
-                    recent_volume_ma = df['volume'].iloc[-self.strong_rise_period - 1:-1].mean()
-                    if recent_volume_ma >= prev_volume_ma5 * self.volume_amplify_ratio:
-                        volume_amplified = True
+            prev_volume_start = -self.strong_rise_period - 10
+            prev_volume_end = -self.strong_rise_period - 1
+            if prev_volume_start >= -len(df):
+                prev_volume_ma = df['volume'].iloc[prev_volume_start:prev_volume_end].mean()
+            else:
+                prev_volume_ma = df['volume'].iloc[:-self.strong_rise_period - 1].mean()
+            
+            recent_volume_ma = df['volume'].iloc[-self.strong_rise_period - 1:-1].mean()
+            
+            volume_amplified = False
+            if prev_volume_ma > 0 and recent_volume_ma >= prev_volume_ma * self.volume_amplify_ratio:
+                volume_amplified = True
 
-            # 确认拉升段：阳线数量、成交量放大、实体大小、价格位置均满足条件
             if rise_count >= self.strong_rise_min_count and volume_amplified and avg_body >= self.n_value * self.strong_rise_body_ratio:
                 if current_price > ma:
                     self._in_rise_phase = True
+                    self._rise_high = current_high
+                    self._pre_rise_volume_ma = prev_volume_ma
 
-        # 处理回踩阶段：追踪最低点，检测退出条件
         if self._in_pullback_phase:
             if current_price < self._pullback_low:
                 self._pullback_low = current_price
 
-            # 跌破均线则退出回踩阶段
+            if self._pre_rise_volume_ma > 0:
+                pullback_volume_check = df['volume'].iloc[-3:].mean()
+                if pullback_volume_check > self._pre_rise_volume_ma * self.pullback_volume_ratio:
+                    self._in_pullback_phase = False
+                    self._pullback_low = 0.0
+                    self._pullback_high = 0.0
+                    self._rise_high = 0.0
+                    self._pre_rise_volume_ma = 0.0
+                    return
+
             if current_price < ma:
                 self._in_pullback_phase = False
                 self._pullback_low = 0.0
                 self._pullback_high = 0.0
+                self._rise_high = 0.0
+                self._pre_rise_volume_ma = 0.0
 
     def _reset_phase_detection(self):
         self._in_rise_phase = False
         self._in_pullback_phase = False
         self._pullback_low = 0.0
         self._pullback_high = 0.0
+        self._rise_high = 0.0
+        self._pre_rise_volume_ma = 0.0
 
     def reset(self):
         self.entry_price = 0.0

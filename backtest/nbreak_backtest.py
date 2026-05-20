@@ -6,15 +6,15 @@ from db.kline_data import KlineData
 
 
 if __name__ == '__main__':
-    symbol = 'DOGEUSDT'
+    symbol = 'SOLUSDT'
 
     kline_service = KlineService()
-    klines = kline_service.get_from_db(symbol, '4h', limit=500)
+    klines = kline_service.get_from_db(symbol, '4h', limit=1000)
     df = KlineData.to_dataframe(klines)
 
-    strategy = NBreakStrategy()
+    strategy = NBreakStrategy(ma_period=20, strong_rise_period=10, strong_rise_body_ratio=1.2, atr_period=10)
 
-    engine = BacktestEngine(initial_capital=10000.0)
+    engine = BacktestEngine(initial_capital=100000.0)
 
     print("开始精准N破战法回测...")
     stats = engine.run_with_data(strategy, df, symbol=symbol)

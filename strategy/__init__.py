@@ -9,11 +9,12 @@ from strategy.bollinger import BollingerStrategy
 from strategy.macd import MACDStrategy
 from strategy.lifemore import LivermoreStrategy
 from strategy.turtle import TurtleStrategy
+from strategy.nbreak import NBreakStrategy
 
 __all__ = [
     'SignalStrategy', 'Signal', 'SignalType',
     'MAStrategy', 'CompositeStrategy',
     'VolatilityStrategy', 'VolumeStrategy', 'RSIStrategy',
     'BollingerStrategy', 'MACDStrategy',
-    'LivermoreStrategy', 'TurtleStrategy'
+    'LivermoreStrategy', 'TurtleStrategy', 'NBreakStrategy'
 ]

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
+from backtest import BacktestReporter
 from strategy.nbreak import NBreakStrategy
 from strategy.base import SignalType
 from tests import BaseStrategyTestCase
@@ -82,6 +83,9 @@ class TestNBreakStrategy(BaseStrategyTestCase):
         stats = engine.run_with_data(strategy, df, symbol="TEST")
         
         self.assertGreater(stats.final_capital, 0)
+
+        reporter = BacktestReporter(stats, engine.get_orders(), engine.get_trades())
+        print(reporter.generate_text_report())
         print(f"回测资金: {stats.final_capital:.2f}")
         print("回测引擎集成测试通过")
 
